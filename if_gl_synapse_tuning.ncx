@@ -265,7 +265,7 @@ clamp_i_vec.resize(5001)</string>
    <float>100.0</float>
   </void>
   <void property="reference">
-   <string>Sim_14</string>
+   <string>Sim_17</string>
   </void>
   <void property="saveCopyGenSimFiles">
    <boolean>true</boolean>
@@ -382,6 +382,9 @@ clamp_i_vec.resize(5001)</string>
         </void>
         <void property="weightsGenerator">
          <object class="ucl.physiol.neuroconstruct.utils.WeightGenerator">
+          <void property="fixedNum">
+           <float>6.08</float>
+          </void>
           <void property="numberType">
            <int>11</int>
           </void>
@@ -409,6 +412,9 @@ clamp_i_vec.resize(5001)</string>
         </void>
         <void property="weightsGenerator">
          <object class="ucl.physiol.neuroconstruct.utils.WeightGenerator">
+          <void property="fixedNum">
+           <float>0.775</float>
+          </void>
           <void property="numberType">
            <int>11</int>
           </void>
