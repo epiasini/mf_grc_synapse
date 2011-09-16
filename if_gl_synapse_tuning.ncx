@@ -416,15 +416,15 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
     <float>10.0</float>
     <string>// uncomment when calibrating on a single EPSC, to voltage clamp and record holding current.
 
-//objref clamp_i_file
-//clamp_i_file = new File()
+objref clamp_i_file
+clamp_i_file = new File()
 
-//strdef clamp_filename
-//sprint(filename, &quot;%sclamp_i.dat&quot;, targetDir)
+strdef clamp_filename
+sprint(filename, &quot;%sclamp_i.dat&quot;, targetDir)
 
-//clamp_i_file.wopen(filename)
-//clamp_i_vec.printf(clamp_i_file)
-//clamp_i_file.close()
+clamp_i_file.wopen(filename)
+clamp_i_vec.printf(clamp_i_file)
+clamp_i_file.close()
 </string>
    </void>
    <void method="put">
@@ -432,26 +432,26 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
     <string>// uncomment when calibrating on a single EPSC, to voltage clamp and record holding current.
 
 
-//objectvar my_v_clamp
-//
-//a_GrCs[0].Soma {
-//    my_v_clamp = new SEClamp(0.5)
-//    my_v_clamp.dur1 = 50
-//    my_v_clamp.amp1 = -70
-//}
+objectvar my_v_clamp
 
-//objref clamp_i
-//clamp_i = new Graph(0)
-//clamp_i.size(0, 100.0, -90.0, 50.0)
-//clamp_i.view(0, -90.0, 100.0, 140.0, 80, 330, 330, 250)
-//clamp_i.addexpr(&quot;my_v_clamp.i&quot;, 1, 1, 0.8, 0.9, 2)
-//graphList[0].append(clamp_i)
+a_GrCs[0].Soma {
+    my_v_clamp = new SEClamp(0.5)
+    my_v_clamp.dur1 = 50
+    my_v_clamp.amp1 = -70
+}
+
+objref clamp_i
+clamp_i = new Graph(0)
+clamp_i.size(0, 100.0, -90.0, 50.0)
+clamp_i.view(0, -90.0, 100.0, 140.0, 80, 330, 330, 250)
+clamp_i.addexpr(&quot;my_v_clamp.i&quot;, 1, 1, 0.8, 0.9, 2)
+graphList[0].append(clamp_i)
 
 
-//objref clamp_i_vec
-//clamp_i_vec = new Vector()
-//clamp_i_vec.record(&amp;my_v_clamp.i)
-//clamp_i_vec.resize(5001)</string>
+objref clamp_i_vec
+clamp_i_vec = new Vector()
+clamp_i_vec.record(&amp;my_v_clamp.i)
+clamp_i_vec.resize(5001)</string>
    </void>
    <void method="put">
     <float>0.0</float>
@@ -469,7 +469,7 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
    <float>100.0</float>
   </void>
   <void property="reference">
-   <string>Sim_19</string>
+   <string>Sim_38</string>
   </void>
   <void property="saveCopyGenSimFiles">
    <boolean>true</boolean>
@@ -484,7 +484,7 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
     <object class="ucl.physiol.neuroconstruct.simulation.IClampSettings">
      <void property="amp">
       <void property="fixedNum">
-       <float>2.0</float>
+       <float>1.5</float>
       </void>
      </void>
      <void property="cellGroup">
@@ -492,7 +492,7 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
      </void>
      <void property="dur">
       <void property="fixedNum">
-       <float>1.0</float>
+       <float>0.5</float>
       </void>
       <void property="numberType">
        <int>11</int>
@@ -653,15 +653,15 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
          </object>
         </void>
         <void property="synapseType">
-         <string>AMPA_GranGol</string>
+         <string>MF_AMPA</string>
         </void>
         <void property="threshold">
-         <double>-40.0</double>
+         <double>-48.0</double>
         </void>
         <void property="weightsGenerator">
          <object class="ucl.physiol.neuroconstruct.utils.WeightGenerator">
           <void property="fixedNum">
-           <float>6.08</float>
+           <float>6.78</float>
           </void>
           <void property="numberType">
            <int>11</int>
@@ -686,12 +686,12 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
          <string>NMDA</string>
         </void>
         <void property="threshold">
-         <double>-40.0</double>
+         <double>-48.0</double>
         </void>
         <void property="weightsGenerator">
          <object class="ucl.physiol.neuroconstruct.utils.WeightGenerator">
           <void property="fixedNum">
-           <float>0.775</float>
+           <float>0.864</float>
           </void>
           <void property="numberType">
            <int>11</int>
@@ -717,15 +717,15 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
          </object>
         </void>
         <void property="synapseType">
-         <string>AMPA_GranGol</string>
+         <string>AlphaSyn1</string>
         </void>
         <void property="threshold">
-         <double>-40.0</double>
+         <double>-48.0</double>
         </void>
         <void property="weightsGenerator">
          <object class="ucl.physiol.neuroconstruct.utils.WeightGenerator">
           <void property="fixedNum">
-           <float>6.08</float>
+           <float>6.78</float>
           </void>
           <void property="numberType">
            <int>11</int>
@@ -750,12 +750,12 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
          <string>NMDA</string>
         </void>
         <void property="threshold">
-         <double>-40.0</double>
+         <double>-48.0</double>
         </void>
         <void property="weightsGenerator">
          <object class="ucl.physiol.neuroconstruct.utils.WeightGenerator">
           <void property="fixedNum">
-           <float>0.775</float>
+           <float>0.864</float>
           </void>
           <void property="numberType">
            <int>11</int>

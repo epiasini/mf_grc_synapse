@@ -22,5 +22,5 @@ Note the following:
 <entry key="ChannelML file">TonicGABA.xml</entry>
 <entry key="GENESIS file requires compilation">false</entry>
 <entry key="Mechanism Name">TonicGABA</entry>
-<entry key="Mechanism Model">Template based ChannelML file</entry>
+<entry key="Mechanism Model">ChannelML based process</entry>
 </properties>
