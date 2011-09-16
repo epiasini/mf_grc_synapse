@@ -1,0 +1,7 @@
+Hi Eugenio, 
+
+I have attached my notes from when I did a rough match of a granule cell layer model to experimental data. This was for the DeSchutter Maex model so it wont carry over directly to I.F. but the method is the same. The basic approach is to adjust the weight factors in neuroconstruct so that the subthreshold EPSCs in the I.F. cells matches the data (in future it may of course be possible to automate this). We then assume that active inputs fire at 40Hz (van Kaan, DeSchutter), and that an 'active' (i.e. when more than the threshold number of inputs is active) granule cell fires at an average of 7Hz (Deguid, Hausser et al). The inhibition is adjusted to meet this target. The experimental data is from Jasons paper and Sargeant et al (both attached). Ultimately the aim is to have a table of the inhibitory currents that give rise to X inputs being required to be active before the cell is 'on', where X:1,2,...,d with d being the total number of dendrites. You will probably realise that for this to work properly one might need some kind of non-linear inhibitory mechanism (which might be down to phasic golgi cell inhibition), but for the time being assume tonic inhibition only.
+
+I will also forward you Jason's data about the average size of the AMPA and NMDA epscs in granule cells. This is probably what you want to match as closely as possible (in terms of magnitude, the time course will not be exactly the same with the 'off-the-shelf' models at present.)
+
+Guy

@@ -1,0 +1,25 @@
+From: Jason Rothman <j.rothman@ucl.ac.uk>
+Date: 13 September 2011 18:17:37 GMT+01:00
+To: Guy Billings <g.billings@ucl.ac.uk>
+Subject: GC gAMPA
+
+
+AMPA WaveForm, from fits to Laurence's data
+
+gAMPA = Math.pow((1 - Math.exp(-(t - t0) / RT)), N)
+gAMPA *= A1 * Math.exp(-(t - t0) / T1) + A2 * Math.exp(-(t - t0) / T2) + A3 * Math.exp(-(t - t0) / T3)
+
+RT = 0.10
+N = 11
+A1 = 2.31
+T1 = 0.45
+A2 = 0.30
+T2 = 2.88
+A3 = 0.08
+T3 = 21.67
+
+normalize waveform and scale by gAMPApeak
+
+gAMPApeak =  1.04 nS       (4 GCs from Gain 2009; this is on the larger size)
+
+gAMPApeak =  0.7 nS       (average from David's spillover paper)

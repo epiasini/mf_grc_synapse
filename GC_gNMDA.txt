@@ -1,0 +1,23 @@
+From: Jason Rothman <j.rothman@ucl.ac.uk>
+Date: 13 September 2011 18:03:23 GMT+01:00
+To: Guy Billings <g.billings@ucl.ac.uk>
+Subject: GC gNMDA
+
+
+NMDA WaveForm, from fits to Laurence's data
+
+gNMDA = Math.pow((1 - Math.exp(-(t - t0) / RT)), N)
+gNMDA *= A1 * Math.exp(-(t - t0) / T1) + A2 * Math.exp(-(t - t0) / T2)
+
+RT = 1.14
+N = 1
+A1 = 0.11
+T1 = 8.10
+A2 = 0.06
+T2 = 37.0
+
+normalize the waveform and scale by gNMDApeak * gNMDAblock(v)
+
+gNMDApeak = 367.9 pS                                              (unblocked, from Gain 2009)
+
+gNMDAblock(v) = 1.0 / (1.0 + Math.exp(-(v + 12.8) / 22.4))            (from Gain 2009)
