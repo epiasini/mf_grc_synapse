@@ -695,7 +695,7 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
    <float>100.0</float>
   </void>
   <void property="reference">
-   <string>Sim_139</string>
+   <string>Sim_140</string>
   </void>
   <void property="saveCopyGenSimFiles">
    <boolean>true</boolean>
@@ -1045,13 +1045,16 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
          </object>
         </void>
         <void property="synapseType">
-         <string>J_NMDA</string>
+         <string>AMPA</string>
         </void>
         <void property="threshold">
          <double>-48.0</double>
         </void>
         <void property="weightsGenerator">
          <object class="ucl.physiol.neuroconstruct.utils.WeightGenerator">
+          <void property="fixedNum">
+           <float>0.2</float>
+          </void>
           <void property="numberType">
            <int>11</int>
           </void>
@@ -1072,16 +1075,13 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
          </object>
         </void>
         <void property="synapseType">
-         <string>AMPA</string>
+         <string>NMDA</string>
         </void>
         <void property="threshold">
          <double>-48.0</double>
         </void>
         <void property="weightsGenerator">
          <object class="ucl.physiol.neuroconstruct.utils.WeightGenerator">
-          <void property="fixedNum">
-           <float>0.2</float>
-          </void>
           <void property="numberType">
            <int>11</int>
           </void>

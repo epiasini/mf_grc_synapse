@@ -19,8 +19,8 @@ Note the following:
 <entry key="NEURON file requires compilation">true</entry>
 <entry key="Mechanism Type">Synaptic mechanism</entry>
 <entry key="PSICS mapping">ChannelML_v1.8.1_PSICS.xsl</entry>
-<entry key="ChannelML file">J_NMDA.xml</entry>
+<entry key="ChannelML file">NMDA.xml</entry>
 <entry key="GENESIS file requires compilation">false</entry>
-<entry key="Mechanism Name">J_NMDA</entry>
+<entry key="Mechanism Name">NMDA</entry>
 <entry key="Mechanism Model">ChannelML based process</entry>
 </properties>

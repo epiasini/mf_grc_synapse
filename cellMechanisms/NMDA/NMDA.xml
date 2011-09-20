@@ -4,7 +4,7 @@
     <meta:notes>ChannelML file describing a synaptic mechanism</meta:notes>
     
      
-    <synapse_type name="J_NMDA">
+    <synapse_type name="NMDA">
         
         <status value="stable">
             <meta:contributor>
