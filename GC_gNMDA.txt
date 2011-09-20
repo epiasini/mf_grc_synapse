@@ -21,3 +21,29 @@ normalize the waveform and scale by gNMDApeak * gNMDAblock(v)
 gNMDApeak = 367.9 pS                                              (unblocked, from Gain 2009)
 
 gNMDAblock(v) = 1.0 / (1.0 + Math.exp(-(v + 12.8) / 22.4))            (from Gain 2009)
+
+
+#==========================
+#==normalization in numpy==
+#==========================
+import numpy as np
+from scipy import integrate
+
+dt = 0.001
+t = np.arange(0, 200, dt)
+gNMDA = np.power((1 - np.exp(-t / RT)), N)
+gNMDA *= A1 * np.exp(-t/ T1) + A2 * np.exp(-t / T2)
+I = integrate.trapz(gNMDA, dx=dt)
+
+# result:
+I
+2.9247428573984062
+waveform_peak = max(gNMDA)	
+waveform_peak
+0.12203131127738243
+
+#=========================
+
+The area of the waveform is useless, that's not the kind of normalization we're looking for.
+
+so the waveform should be multiplied by gNMDApeak*gNMDAblock(v)/waveform_peak

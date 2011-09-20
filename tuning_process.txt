@@ -1,0 +1,26 @@
+I decided to create a new set of AMPA/NMDA mechanisms to approximate the behaviour of Jason's synapses (without plasticity). The problem is, of course, that NeuroML's 'building blocks' for synapses don't map directly to the equations that Jason used. I went for a (sort of) quick-and-dirty solution:
+
+* AMPA: NeuroML has a 'multi_decay_syn' element that allows to define a single rise time and three different sets of decay times and amplitudes. This is quite close what Jason's AMPA model does except that, unfortunately, the functional forms of the equations are apparently different in the two cases (even if I think that it should be possible to equate them by an appropriate tranformation on the parameters). Furthermore, I don't know exactly how NeuroML's waveforms are normalized, since the amplitude parameters are three 'maximum amplitudes', instead of being a single 'max amplitude' and three relative amplitudes. Nevertheless, I just took the three 'relative factors' (each given by a relative amplitude times the waveform normalization times the max amplitude: in other words, the multiplicative factor to the exponential function as it appears in each term of the explicit form of the equation) in Jason's model and used them as 'max amplitudes' in NeuroML's multi_decay_syn element. This had two consequences:
+ - I got a nice agreement on the shapes of the conductance waveforms, that just needed an adjustment on the rise time parameter to compensate for the different functional shape on the 'rising' part (the 'power of N') in Jason's model. A good match was achieved with a rise time of 0.15ms.
+ - The normalisation was messed up, so I went back to nC and did a few voltage-clamp simulations to find out what synaptic weight factor was needed to get an EPSC that agreed, at least in a first approximation, with the results shown in Sargent2005. I opted for a synaptic weight of 0.2, that gives: peak h. current -42pA, total charge tranfer (roughly) 300fC, EPSC half-life (roughly) 4ms. Sargent2005 had shorter, more peaked EPSCs that overall carried less charge; but that paper doesn't take into account the slow NMDA component, which - I would say - gives rise to the difference in character that can be seen here.
+
+* NMDA: 
+ - the equations for the blocking factors have a different form, so I just found (by trial-and-error) a 'gamma' parameter that gave a similar dependency of the factor on the voltage. I found it to be 1/(29mV).
+ - there's a fast (8.10ms, relative amplitude 0.11) and a slow (37.0ms, relative amplitude 0.06) component, but NeuroML's blocking synapse element allows only a single component (because of 'compatibility issues with genesis'). So I just took the weighted average of the decay time constants: 18.2ms. The rise time is 1.14ms and the maximum conductance is 367.9pS, as in Jason's model. Since here I have control over the normalization of the waveform (and I'm sure that I get to choose the maximum conductance), the synaptic weight in the nC project is 1.
+
+Finally, I checked that the input/output frequency behaviour of this model is at least approximately consistent with what is shown in Rothman2009: in a similar experiment, I get the following results:
+
+==========================
+Poisson stimulation on MFs, AMPA(0.2 syn weight to balance slightly different waveform shape and different normalization)+NMDA(1.0 syn weight) synapse to GrCs. Average frequencies (in Hz) taken over a 1s simulation.
+
+STIM	MF FIRE	    GC FIRE
+100	8	    0
+150	23	    11
+200	40 	    24
+250	54	    42
+300	93	    106
+350	119	    175
+400	128	    200
+450	169	    298
+500	186	    342
+==========================

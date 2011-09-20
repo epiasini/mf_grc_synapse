@@ -23,3 +23,28 @@ normalize waveform and scale by gAMPApeak
 gAMPApeak =  1.04 nS       (4 GCs from Gain 2009; this is on the larger size)
 
 gAMPApeak =  0.7 nS       (average from David's spillover paper)
+
+#==========================
+#==normalization in numpy==
+#==========================
+import numpy as np
+from scipy import integrate
+
+dt = 0.001
+t = np.arange(0, 200, dt)
+gAMPA = np.power((1 - np.exp(-t / RT)), N)
+gAMPA *= A1 * np.exp(-t / T1) + A2 * np.exp(-t / T2) + A3 * np.exp(-t / T3)
+I = integrate.trapz(gAMPA, dx=dt)
+
+# result:
+I
+3.0382560720245961
+waveform_peak = max(gAMPA)	
+waveform_peak
+1.0553402521855129
+
+#=========================
+
+The area of the waveform is useless, that's not the kind of normalization we're looking for.
+
+so the waveform should be multiplied by gAMPApeak/waveform_peak = 0.985

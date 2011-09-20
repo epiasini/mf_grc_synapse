@@ -108,9 +108,21 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
       </void>
      </object>
     </void>
+    <void method="add">
+     <object class="ucl.physiol.neuroconstruct.project.packing.RandomCellPackingAdapter"/>
+    </void>
+    <void method="add">
+     <object class="ucl.physiol.neuroconstruct.project.packing.RandomCellPackingAdapter"/>
+    </void>
    </void>
    <void method="get">
     <string>Cell Type</string>
+    <void method="add">
+     <string>IF_GrC</string>
+    </void>
+    <void method="add">
+     <string>IF_simple</string>
+    </void>
     <void method="add">
      <string>IF_GrC</string>
     </void>
@@ -137,6 +149,12 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
     </void>
     <void method="add">
      <int>7</int>
+    </void>
+    <void method="add">
+     <int>6</int>
+    </void>
+    <void method="add">
+     <int>5</int>
     </void>
    </void>
    <void method="get">
@@ -173,6 +191,22 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
       <int>255</int>
      </object>
     </void>
+    <void method="add">
+     <object class="java.awt.Color">
+      <int>239</int>
+      <int>99</int>
+      <int>194</int>
+      <int>255</int>
+     </object>
+    </void>
+    <void method="add">
+     <object class="java.awt.Color">
+      <int>7</int>
+      <int>206</int>
+      <int>115</int>
+      <int>255</int>
+     </object>
+    </void>
    </void>
    <void method="get">
     <string>Region Name</string>
@@ -188,6 +222,12 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
     <void method="add">
      <string>mossy_region</string>
     </void>
+    <void method="add">
+     <string>SampleRegion</string>
+    </void>
+    <void method="add">
+     <string>SampleRegion</string>
+    </void>
    </void>
    <void method="get">
     <string>Cell Group Name</string>
@@ -202,6 +242,12 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
     </void>
     <void method="add">
      <string>MFs_net</string>
+    </void>
+    <void method="add">
+     <string>GrCs_2</string>
+    </void>
+    <void method="add">
+     <string>MFs_2</string>
     </void>
    </void>
   </void>
@@ -444,6 +490,155 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
      </void>
     </object>
    </void>
+   <void method="add">
+    <object class="ucl.physiol.neuroconstruct.project.SimPlot">
+     <void property="cellGroup">
+      <string>GrCs</string>
+     </void>
+     <void property="cellNumber">
+      <string>0</string>
+     </void>
+     <void property="graphWindow">
+      <string>GraphWin_1</string>
+     </void>
+     <void property="maxValue">
+      <float>50.0</float>
+     </void>
+     <void property="minValue">
+      <float>-90.0</float>
+     </void>
+     <void property="plotAndOrSave">
+      <string>Plot and save</string>
+     </void>
+     <void property="plotReference">
+      <string>gNMDA</string>
+     </void>
+     <void property="segmentId">
+      <string>0</string>
+     </void>
+     <void property="valuePlotted">
+      <string>NMDA:g</string>
+     </void>
+    </object>
+   </void>
+   <void method="add">
+    <object class="ucl.physiol.neuroconstruct.project.SimPlot">
+     <void property="cellGroup">
+      <string>GrCs_2</string>
+     </void>
+     <void property="cellNumber">
+      <string>*</string>
+     </void>
+     <void property="graphWindow">
+      <string>GrCs_2_v</string>
+     </void>
+     <void property="maxValue">
+      <float>50.0</float>
+     </void>
+     <void property="minValue">
+      <float>-90.0</float>
+     </void>
+     <void property="plotAndOrSave">
+      <string>Plot and save</string>
+     </void>
+     <void property="plotReference">
+      <string>GrCs_2_v</string>
+     </void>
+     <void property="segmentId">
+      <string>0</string>
+     </void>
+    </object>
+   </void>
+   <void method="add">
+    <object class="ucl.physiol.neuroconstruct.project.SimPlot">
+     <void property="cellGroup">
+      <string>MFs_2</string>
+     </void>
+     <void property="cellNumber">
+      <string>*</string>
+     </void>
+     <void property="graphWindow">
+      <string>MFs_2_v</string>
+     </void>
+     <void property="maxValue">
+      <float>50.0</float>
+     </void>
+     <void property="minValue">
+      <float>-90.0</float>
+     </void>
+     <void property="plotAndOrSave">
+      <string>Plot and save</string>
+     </void>
+     <void property="plotReference">
+      <string>MFs_2_v</string>
+     </void>
+     <void property="segmentId">
+      <string>0</string>
+     </void>
+    </object>
+   </void>
+   <void method="add">
+    <object class="ucl.physiol.neuroconstruct.project.SimPlot">
+     <void property="cellGroup">
+      <string>MFs_2</string>
+     </void>
+     <void property="cellNumber">
+      <string>*</string>
+     </void>
+     <void property="graphWindow">
+      <string>GraphWin_0</string>
+     </void>
+     <void property="maxValue">
+      <float>50.0</float>
+     </void>
+     <void property="minValue">
+      <float>-90.0</float>
+     </void>
+     <void property="plotAndOrSave">
+      <string>Plot and save</string>
+     </void>
+     <void property="plotReference">
+      <string>MFs_spike_2</string>
+     </void>
+     <void property="segmentId">
+      <string>0</string>
+     </void>
+     <void property="valuePlotted">
+      <string>SPIKE:-48</string>
+     </void>
+    </object>
+   </void>
+   <void method="add">
+    <object class="ucl.physiol.neuroconstruct.project.SimPlot">
+     <void property="cellGroup">
+      <string>GrCs_2</string>
+     </void>
+     <void property="cellNumber">
+      <string>*</string>
+     </void>
+     <void property="graphWindow">
+      <string>GraphWin_0</string>
+     </void>
+     <void property="maxValue">
+      <float>50.0</float>
+     </void>
+     <void property="minValue">
+      <float>-90.0</float>
+     </void>
+     <void property="plotAndOrSave">
+      <string>Plot and save</string>
+     </void>
+     <void property="plotReference">
+      <string>GrCs_spike_2</string>
+     </void>
+     <void property="segmentId">
+      <string>0</string>
+     </void>
+     <void property="valuePlotted">
+      <string>SPIKE:-48</string>
+     </void>
+    </object>
+   </void>
   </void>
  </object>
  <object class="ucl.physiol.neuroconstruct.project.ProjectProperties">
@@ -478,42 +673,42 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
     <float>10.0</float>
     <string>// uncomment when calibrating on a single EPSC, to voltage clamp and record holding current.
 
-objref clamp_i_file
-clamp_i_file = new File()
+//objref clamp_i_file
+//clamp_i_file = new File()
 
-strdef clamp_filename
-sprint(filename, &quot;%sclamp_i.dat&quot;, targetDir)
+//strdef clamp_filename
+//sprint(filename, &quot;%sclamp_i.dat&quot;, targetDir)
 
-clamp_i_file.wopen(filename)
-clamp_i_vec.printf(clamp_i_file)
-clamp_i_file.close()
+//clamp_i_file.wopen(filename)
+//clamp_i_vec.printf(clamp_i_file)
+//clamp_i_file.close()
 </string>
    </void>
    <void method="put">
     <float>-0.5</float>
     <string>// uncomment when calibrating on a single EPSC, to voltage clamp and record holding current.
 
+//objectvar my_v_clamp
 
-objectvar my_v_clamp
+//a_GrCs[0].Soma {
+//    my_v_clamp = new SEClamp(0.5)
+//    my_v_clamp.dur1 = 50
+//    my_v_clamp.amp1 = -70
+//}
 
-a_GrCs[0].Soma {
-    my_v_clamp = new SEClamp(0.5)
-    my_v_clamp.dur1 = 50
-    my_v_clamp.amp1 = -70
-}
-
-objref clamp_i
-clamp_i = new Graph(0)
-clamp_i.size(0, 100.0, -90.0, 50.0)
-clamp_i.view(0, -90.0, 100.0, 140.0, 80, 330, 330, 250)
-clamp_i.addexpr(&quot;my_v_clamp.i&quot;, 1, 1, 0.8, 0.9, 2)
-graphList[0].append(clamp_i)
+//objref clamp_i
+//clamp_i = new Graph(0)
+//clamp_i.size(0, 100.0, -90.0, 50.0)
+//clamp_i.view(0, -90.0, 100.0, 140.0, 80, 330, 330, 250)
+//clamp_i.addexpr(&quot;my_v_clamp.i&quot;, 1, 1, 0.8, 0.9, 2)
+//graphList[0].append(clamp_i)
 
 
-objref clamp_i_vec
-clamp_i_vec = new Vector()
-clamp_i_vec.record(&amp;my_v_clamp.i)
-clamp_i_vec.resize(5001)</string>
+//objref clamp_i_vec
+//clamp_i_vec = new Vector()
+//clamp_i_vec.record(&amp;my_v_clamp.i)
+//clamp_i_vec.resize(5001)
+</string>
    </void>
    <void method="put">
     <float>0.0</float>
@@ -531,7 +726,7 @@ clamp_i_vec.resize(5001)</string>
    <float>100.0</float>
   </void>
   <void property="reference">
-   <string>Sim_52</string>
+   <string>Sim_138</string>
   </void>
   <void property="saveCopyGenSimFiles">
    <boolean>true</boolean>
@@ -596,7 +791,7 @@ clamp_i_vec.resize(5001)</string>
      <void property="rate">
       <object class="ucl.physiol.neuroconstruct.utils.NumberGenerator">
        <void property="fixedNum">
-        <float>0.1</float>
+        <float>0.5</float>
        </void>
        <void property="numberType">
         <int>11</int>
@@ -611,6 +806,62 @@ clamp_i_vec.resize(5001)</string>
      </void>
     </object>
    </void>
+   <void method="add">
+    <object class="ucl.physiol.neuroconstruct.simulation.IClampSettings">
+     <void property="amp">
+      <void property="fixedNum">
+       <float>0.0274</float>
+      </void>
+     </void>
+     <void property="cellGroup">
+      <string>MFs</string>
+     </void>
+     <void property="del">
+      <void property="fixedNum">
+       <float>0.0</float>
+      </void>
+     </void>
+     <void property="dur">
+      <void property="fixedNum">
+       <float>1000.0</float>
+      </void>
+      <void property="numberType">
+       <int>11</int>
+      </void>
+     </void>
+     <void property="reference">
+      <string>MF_in_long_cclamp_single</string>
+     </void>
+    </object>
+   </void>
+   <void method="add">
+    <object class="ucl.physiol.neuroconstruct.simulation.IClampSettings">
+     <void property="amp">
+      <void property="fixedNum">
+       <float>0.027</float>
+      </void>
+     </void>
+     <void property="cellGroup">
+      <string>MFs_2</string>
+     </void>
+     <void property="del">
+      <void property="fixedNum">
+       <float>0.0</float>
+      </void>
+     </void>
+     <void property="dur">
+      <void property="fixedNum">
+       <float>1000.0</float>
+      </void>
+      <void property="numberType">
+       <int>11</int>
+      </void>
+     </void>
+     <void property="reference">
+      <string>long_cclamp_2</string>
+     </void>
+    </object>
+   </void>
   </void>
  </object>
  <object class="ucl.physiol.neuroconstruct.project.SimConfigInfo">
@@ -619,14 +870,20 @@ clamp_i_vec.resize(5001)</string>
     <object class="ucl.physiol.neuroconstruct.project.SimConfig">
      <void property="cellGroups">
       <void method="add">
-       <string>GrCs</string>
+       <string>MFs</string>
       </void>
       <void method="add">
-       <string>MFs</string>
+       <string>GrCs_2</string>
+      </void>
+      <void method="add">
+       <string>MFs_2</string>
+      </void>
+      <void method="add">
+       <string>GrCs</string>
       </void>
      </void>
      <void property="description">
-      <string>This is the default configuration of the Cell Groups, stimulations, plots, etc for this project</string>
+      <string>voltage clamp EPSC check (don&apos;t forget to uncomment extra hoc code)</string>
      </void>
      <void property="inputs">
       <void method="add">
@@ -638,7 +895,10 @@ clamp_i_vec.resize(5001)</string>
      </void>
      <void property="netConns">
       <void method="add">
-       <string>NetConn_MFs_GrCs</string>
+       <string>MF_GrC_noNMDA</string>
+      </void>
+      <void method="add">
+       <string>MF_GrC</string>
       </void>
      </void>
      <void property="plots">
@@ -722,7 +982,7 @@ clamp_i_vec.resize(5001)</string>
      </void>
      <void property="netConns">
       <void method="add">
-       <string>NetConn_MFs_GrCs</string>
+       <string>MF_GrC</string>
       </void>
      </void>
      <void property="plots">
@@ -730,7 +990,79 @@ clamp_i_vec.resize(5001)</string>
        <string>GrCs_v</string>
       </void>
       <void method="add">
+       <string>MFs_spike</string>
+      </void>
+      <void method="add">
        <string>MFs_v</string>
+      </void>
+      <void method="add">
+       <string>GrCs_spike</string>
+      </void>
+     </void>
+     <void property="simDuration">
+      <float>1000.0</float>
+     </void>
+    </object>
+   </void>
+   <void method="add">
+    <object class="ucl.physiol.neuroconstruct.project.SimConfig">
+     <void property="cellGroups">
+      <void method="add">
+       <string>MFs</string>
+      </void>
+      <void method="add">
+       <string>GrCs_2</string>
+      </void>
+      <void method="add">
+       <string>MFs_2</string>
+      </void>
+      <void method="add">
+       <string>GrCs</string>
+      </void>
+     </void>
+     <void property="inputs">
+      <void method="add">
+       <string>long_cclamp_2</string>
+      </void>
+      <void method="add">
+       <string>MF_in_long_cclamp_single</string>
+      </void>
+     </void>
+     <void property="name">
+      <string>compare_NMDA</string>
+     </void>
+     <void property="netConns">
+      <void method="add">
+       <string>MF_GrC_noNMDA</string>
+      </void>
+      <void method="add">
+       <string>MF_GrC</string>
+      </void>
+     </void>
+     <void property="plots">
+      <void method="add">
+       <string>MFs_2_v</string>
+      </void>
+      <void method="add">
+       <string>GrCs_v</string>
+      </void>
+      <void method="add">
+       <string>MFs_spike</string>
+      </void>
+      <void method="add">
+       <string>GrCs_2_v</string>
+      </void>
+      <void method="add">
+       <string>MFs_spike_2</string>
+      </void>
+      <void method="add">
+       <string>GrCs_spike_2</string>
+      </void>
+      <void method="add">
+       <string>MFs_v</string>
+      </void>
+      <void method="add">
+       <string>GrCs_spike</string>
       </void>
      </void>
      <void property="simDuration">
@@ -750,9 +1082,21 @@ clamp_i_vec.resize(5001)</string>
     <void method="add">
      <string>NetConn_MFs_net_GrCs_net</string>
     </void>
+    <void method="add">
+     <string>MF_GrC</string>
+    </void>
+    <void method="add">
+     <string>MF_GrC_noNMDA</string>
+    </void>
    </void>
    <void method="get">
     <string>AP speed</string>
+    <void method="add">
+     <float>3.4028235E38</float>
+    </void>
+    <void method="add">
+     <float>3.4028235E38</float>
+    </void>
     <void method="add">
      <float>3.4028235E38</float>
     </void>
@@ -890,9 +1234,110 @@ clamp_i_vec.resize(5001)</string>
       </void>
      </object>
     </void>
+    <void method="add">
+     <object class="java.util.Vector">
+      <void method="add">
+       <object class="ucl.physiol.neuroconstruct.project.SynapticProperties">
+        <void property="delayGenerator">
+         <object class="ucl.physiol.neuroconstruct.utils.NumberGenerator">
+          <void property="fixedNum">
+           <float>0.0</float>
+          </void>
+          <void property="numberType">
+           <int>11</int>
+          </void>
+         </object>
+        </void>
+        <void property="synapseType">
+         <string>J_NMDA</string>
+        </void>
+        <void property="threshold">
+         <double>-48.0</double>
+        </void>
+        <void property="weightsGenerator">
+         <object class="ucl.physiol.neuroconstruct.utils.WeightGenerator">
+          <void property="numberType">
+           <int>11</int>
+          </void>
+         </object>
+        </void>
+       </object>
+      </void>
+      <void method="add">
+       <object class="ucl.physiol.neuroconstruct.project.SynapticProperties">
+        <void property="delayGenerator">
+         <object class="ucl.physiol.neuroconstruct.utils.NumberGenerator">
+          <void property="fixedNum">
+           <float>0.0</float>
+          </void>
+          <void property="numberType">
+           <int>11</int>
+          </void>
+         </object>
+        </void>
+        <void property="synapseType">
+         <string>AMPA</string>
+        </void>
+        <void property="threshold">
+         <double>-48.0</double>
+        </void>
+        <void property="weightsGenerator">
+         <object class="ucl.physiol.neuroconstruct.utils.WeightGenerator">
+          <void property="fixedNum">
+           <float>0.2</float>
+          </void>
+          <void property="numberType">
+           <int>11</int>
+          </void>
+         </object>
+        </void>
+       </object>
+      </void>
+     </object>
+    </void>
+    <void method="add">
+     <object class="java.util.Vector">
+      <void method="add">
+       <object class="ucl.physiol.neuroconstruct.project.SynapticProperties">
+        <void property="delayGenerator">
+         <object class="ucl.physiol.neuroconstruct.utils.NumberGenerator">
+          <void property="fixedNum">
+           <float>0.0</float>
+          </void>
+          <void property="numberType">
+           <int>11</int>
+          </void>
+         </object>
+        </void>
+        <void property="synapseType">
+         <string>AMPA</string>
+        </void>
+        <void property="threshold">
+         <double>-48.0</double>
+        </void>
+        <void property="weightsGenerator">
+         <object class="ucl.physiol.neuroconstruct.utils.WeightGenerator">
+          <void property="fixedNum">
+           <float>0.6</float>
+          </void>
+          <void property="numberType">
+           <int>11</int>
+          </void>
+         </object>
+        </void>
+       </object>
+      </void>
+     </object>
+    </void>
    </void>
    <void method="get">
     <string>Max/min</string>
+    <void method="add">
+     <object class="ucl.physiol.neuroconstruct.project.MaxMinLength"/>
+    </void>
+    <void method="add">
+     <object class="ucl.physiol.neuroconstruct.project.MaxMinLength"/>
+    </void>
     <void method="add">
      <object class="ucl.physiol.neuroconstruct.project.MaxMinLength"/>
     </void>
@@ -916,6 +1361,20 @@ clamp_i_vec.resize(5001)</string>
       </void>
      </object>
     </void>
+    <void method="add">
+     <object class="ucl.physiol.neuroconstruct.project.SearchPattern">
+      <void property="type">
+       <int>0</int>
+      </void>
+     </object>
+    </void>
+    <void method="add">
+     <object class="ucl.physiol.neuroconstruct.project.SearchPattern">
+      <void property="type">
+       <int>0</int>
+      </void>
+     </object>
+    </void>
    </void>
    <void method="get">
     <string>Source</string>
@@ -924,6 +1383,12 @@ clamp_i_vec.resize(5001)</string>
     </void>
     <void method="add">
      <string>MFs_net</string>
+    </void>
+    <void method="add">
+     <string>MFs</string>
+    </void>
+    <void method="add">
+     <string>MFs_2</string>
     </void>
    </void>
    <void method="get">
@@ -945,6 +1410,20 @@ clamp_i_vec.resize(5001)</string>
       </void>
      </object>
     </void>
+    <void method="add">
+     <object class="ucl.physiol.neuroconstruct.project.ConnectivityConditions">
+      <void property="allowAutapses">
+       <boolean>false</boolean>
+      </void>
+     </object>
+    </void>
+    <void method="add">
+     <object class="ucl.physiol.neuroconstruct.project.ConnectivityConditions">
+      <void property="allowAutapses">
+       <boolean>false</boolean>
+      </void>
+     </object>
+    </void>
    </void>
    <void method="get">
     <string>Target</string>
@@ -953,6 +1432,12 @@ clamp_i_vec.resize(5001)</string>
     </void>
     <void method="add">
      <string>GrCs_net</string>
+    </void>
+    <void method="add">
+     <string>GrCs</string>
+    </void>
+    <void method="add">
+     <string>GrCs_2</string>
     </void>
    </void>
   </void>
