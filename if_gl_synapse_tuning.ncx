@@ -130,13 +130,13 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
      <string>IF_GrC</string>
     </void>
     <void method="add">
-     <string>IF_simple</string>
+     <string>ExcCell</string>
     </void>
     <void method="add">
      <string>IF_GrC</string>
     </void>
     <void method="add">
-     <string>IF_simple</string>
+     <string>ExcCell</string>
     </void>
     <void method="add">
      <string>ExcCell</string>
@@ -746,7 +746,7 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
    <float>100.0</float>
   </void>
   <void property="reference">
-   <string>Sim_168</string>
+   <string>Sim_170</string>
   </void>
   <void property="saveCopyGenSimFiles">
    <boolean>true</boolean>
@@ -791,7 +791,7 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
      <void property="rate">
       <object class="ucl.physiol.neuroconstruct.utils.NumberGenerator">
        <void property="fixedNum">
-        <float>0.14</float>
+        <float>0.03</float>
        </void>
        <void property="numberType">
         <int>11</int>
