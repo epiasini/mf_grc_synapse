@@ -24,3 +24,28 @@ STIM	MF FIRE	    GC FIRE
 450	169	    298
 500	186	    342
 ==========================
+
+
+++++++++++++++
+++21/09/2011++
+++++++++++++++
+Trying to find the 'activation point': the frequency that one should use (in a Poisson spike train) to activate a granule cell when stimulating with a single mossy fiber. To improve upon yesterday's procedure, I took from the RothmanEtAl_KoleEtAl_PyrCell project a cell called ExcCell that, having a very strong FastSynInput input synapse, a large leak conductance and an high outbound spike threshold (and nothing else; of course, the last parameter is not part of the cell but must be set in the relevant netCons) is well suited to act as a simple 'relay' for any spike train we may want to play into it. This, finally, allows us to have a Poisson spike train of our choice activating both AMPA and NMDA synapses with the correct synaptic weights.
+We can now repeat the I/O rate analysis (single trial, each simulation is 10s long):
+
+MF FIRE	   GC FIRE
+10 	   0.7
+20	   3.8
+30	   7.7
+40	   16.6
+50	   27.4
+60	   40.4
+70	   60.2
+80	   72.6
+90	   104.5
+100	   115.7
+110	   135.5
+120	   156.5
+130	   173.7
+140	   208.4
+
+I will take 30Hz to be the input threshold for activation.
