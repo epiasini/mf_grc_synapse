@@ -49,3 +49,21 @@ MF FIRE	   GC FIRE
 140	   208.4
 
 I will take 30Hz to be the input threshold for activation.
+
+INHIBITION TUNING
+Now I will find out the amount of current that "gives rise to X inputs being required to be active before the cell is 'on'", where X=1,2,... is the number of dendrites. I'm testing on a single 1000ms trial for simplicity (this, since I'm using Poisson spike trains, means that these results are just a rough estimate for the correct 'average' values).
+
+NUMBER OF ACTIVE  |  BIAS CURRENT  |	FIRING
+INPUTS REQUIRED   |  	 (pA) 	   |	 RATE
+TO FIRE           |		   |	 (Hz)
+---------------------------------------------------
+1			0		7.7
+2			-17.5		7
+3			-36		8
+4			-50		8
+5			-72		[3,10]
+6			-82		9
+7			-95		[4,11]
+8			-115		8
+9			-130		7
+10			-147		[8,12]
