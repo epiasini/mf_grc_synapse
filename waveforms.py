@@ -3,6 +3,7 @@ from numpy import exp, log
 from scipy.optimize import curve_fit
 from scipy.integrate import trapz
 from functools import partial
+from matplotlib import pyplot as plt
 
 # ad : ampa direct
 # as : ampa spillover
@@ -30,6 +31,7 @@ as_a3_J = .0362763
 as_tau_dec_3_J = 30.856
 
 pulse_duration = 2*as_tau_dec_3_J
+time_points = np.arange(0.05, pulse_duration, 0.001)
 
 def peak_time(tau_rise, tau_dec):
     return (tau_dec*tau_rise)/(tau_dec-tau_rise)*log(tau_dec/tau_rise)
@@ -43,12 +45,9 @@ def g_subcomp(t, tau_rise, tau_dec):
 def a_g_comp(t, tau_rise, a1, tau_dec_1, a2, tau_dec_2, a3, tau_dec_3):
     return a1*g_subcomp(t, tau_rise, tau_dec_1) + a2*g_subcomp(t, tau_rise, tau_dec_2) + a3*g_subcomp(t, tau_rise, tau_dec_3)
 
-
-
 def a_g_J_unnorm_comp(t, N, tau_rise, a1, tau_dec_1, a2, tau_dec_2, a3, tau_dec_3):
     return pow(1-exp(-t/tau_rise), N) * (a1*exp(-t/tau_dec_1) + a2*exp(-t/tau_dec_2) + a3*exp(-t/tau_dec_3))
 
-time_points = np.arange(0, pulse_duration, 0.001)
 # prepare the two 'scaled' components (direct and s.over) to fit the multi_decay_syn expressions to 
 ad_g_J_values = np.array([a_g_J_unnorm_comp(t, ad_N_J, ad_tau_rise_J, ad_a1_J, ad_tau_dec_1_J, ad_a2_J, ad_tau_dec_2_J, ad_a3_J, ad_tau_dec_3_J) for t in time_points])
 as_g_J_values = np.array([a_g_J_unnorm_comp(t, as_N_J, as_tau_rise_J, as_a1_J, as_tau_dec_1_J, as_a2_J, as_tau_dec_2_J, as_a3_J, as_tau_dec_3_J) for t in time_points])
@@ -76,4 +75,16 @@ def a_g(t):
 # estimate error on waveform integral
 a_g_values = np.array([a_g(t) for t in time_points])
 integral_diff = np.abs(trapz(a_g_J_values_scaled_to_max - a_g_values, dx=0.001))
+print(integral_diff)
 
+fig = plt.figure()
+ax = fig.add_subplot(111)
+ax.plot(time_points, a_g_J_values_scaled_to_max, label="Jason's")
+ax.plot(time_points, a_g_values, label="NeuroML")
+ax.set_title('AMPA conductance waveform: direct+spillover')
+ax.set_xlabel('time (ms)')
+ax.set_ylabel('conductance (nS)')
+ax.legend()
+ax.grid()
+
+plt.show()
