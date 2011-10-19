@@ -30,8 +30,26 @@ as_tau_dec_2_J = 7.2695
 as_a3_J = .0362763
 as_tau_dec_3_J = 30.856
 
+n_g_peak_J = 0.37
+
+n_N_J = 1.
+n_tau_rise_J = 1.14
+n_a1_J = .641176
+n_tau_dec_1_J = 8.10
+n_a2_J = .358824
+n_tau_dec_2_J = 37.
+
+n_K1slope_J = 38.427
+n_K2slope_J = 28.357
+n_VK1on_J = 84.784
+n_VK1off_J = -119.51
+n_VK2off_J = -45.895
+
 pulse_duration = 2*as_tau_dec_3_J
-time_points = np.arange(0.05, pulse_duration, 0.001)
+time_points = np.arange(0.01, pulse_duration, 0.001)
+
+ampa_fit=True
+nmda_fit=True
 
 def peak_time(tau_rise, tau_dec):
     return (tau_dec*tau_rise)/(tau_dec-tau_rise)*log(tau_dec/tau_rise)
@@ -39,52 +57,116 @@ def peak_time(tau_rise, tau_dec):
 def norm_factor(tau_rise, tau_dec):
     return 1./(exp(-peak_time(tau_dec, tau_rise)/tau_dec) - exp(-peak_time(tau_dec, tau_rise)/tau_rise))
 
-def g_subcomp(t, tau_rise, tau_dec):
-    return norm_factor(tau_rise, tau_dec)* (exp(-t/tau_dec) - exp(-t/tau_rise))
+def g_subcomp(t, tau_rise, a, tau_dec):
+    return a*norm_factor(tau_rise, tau_dec)* (exp(-t/tau_dec) - exp(-t/tau_rise))
 
 def a_g_comp(t, tau_rise, a1, tau_dec_1, a2, tau_dec_2, a3, tau_dec_3):
-    return a1*g_subcomp(t, tau_rise, tau_dec_1) + a2*g_subcomp(t, tau_rise, tau_dec_2) + a3*g_subcomp(t, tau_rise, tau_dec_3)
+    return g_subcomp(t, tau_rise, a1, tau_dec_1) + g_subcomp(t, tau_rise, a2, tau_dec_2) + g_subcomp(t, tau_rise, a3, tau_dec_3)
 
 def a_g_J_unnorm_comp(t, N, tau_rise, a1, tau_dec_1, a2, tau_dec_2, a3, tau_dec_3):
     return pow(1-exp(-t/tau_rise), N) * (a1*exp(-t/tau_dec_1) + a2*exp(-t/tau_dec_2) + a3*exp(-t/tau_dec_3))
 
-# prepare the two 'scaled' components (direct and s.over) to fit the multi_decay_syn expressions to 
-ad_g_J_values = np.array([a_g_J_unnorm_comp(t, ad_N_J, ad_tau_rise_J, ad_a1_J, ad_tau_dec_1_J, ad_a2_J, ad_tau_dec_2_J, ad_a3_J, ad_tau_dec_3_J) for t in time_points])
-as_g_J_values = np.array([a_g_J_unnorm_comp(t, as_N_J, as_tau_rise_J, as_a1_J, as_tau_dec_1_J, as_a2_J, as_tau_dec_2_J, as_a3_J, as_tau_dec_3_J) for t in time_points])
+def n_g_unblock_J_unnorm(t, N, tau_rise, a1, tau_dec_1, a2, tau_dec_2):
+    return pow(1-exp(-t/tau_rise), N) * (a1*exp(-t/tau_dec_1) + a2*exp(-t/tau_dec_2))
 
-max_ad_g_J_values = ad_g_J_values.max()
-max_as_g_J_values = as_g_J_values.max()
+def n_block_eric(v, K1slope, K2slope, VK1on, VK1off, VK2off):
+     K1ON = exp( -( v - VK1on ) / K1slope )
+     K1OFF = exp( ( v - VK1off ) / K1slope )
+     K2OFF = exp( -( v - VK2off ) / K2slope )
+     block = ( K1OFF + K2OFF ) / ( K1OFF + K2OFF + K1ON )
+     return block
 
-a_g_J_unnorm_values = ad_g_J_values/max_ad_g_J_values + a_sd_ratio_J*(as_g_J_values/max_as_g_J_values)
-max_a_g_J_unnorm_values = a_g_J_unnorm_values.max()
-a_g_J_values_norm = a_g_J_unnorm_values/max_a_g_J_unnorm_values
-a_g_J_values_scaled_to_max = a_g_peak_J*a_g_J_values_norm
+def n_block(v, eta, gamma):
+    return 1/(1 + eta * exp(-gamma*v))
 
-ad_g_J_scaled_component = a_g_peak_J*ad_g_J_values/(max_ad_g_J_values*max_a_g_J_unnorm_values)
-as_g_J_scaled_component = a_g_peak_J*a_sd_ratio_J*as_g_J_values/(max_as_g_J_values*max_a_g_J_unnorm_values)
+param_file = open('fitted_parameters.txt', 'w')
 
-# fitting
-ad_params_f = curve_fit(a_g_comp, time_points, ad_g_J_scaled_component, [ad_tau_rise_J, ad_a1_J, ad_tau_dec_1_J, ad_a2_J, ad_tau_dec_2_J, ad_a3_J, ad_tau_dec_3_J])[0]
-ad_g_fitted = partial(a_g_comp, tau_rise=ad_params_f[0], a1=ad_params_f[1], tau_dec_1=ad_params_f[2], a2=ad_params_f[3], tau_dec_2=ad_params_f[4], a3=ad_params_f[5], tau_dec_3=ad_params_f[6])
-as_params_f = curve_fit(a_g_comp, time_points, as_g_J_scaled_component, [as_tau_rise_J, as_a1_J, as_tau_dec_1_J, as_a2_J, as_tau_dec_2_J, as_a3_J, as_tau_dec_3_J])[0]
-as_g_fitted = partial(a_g_comp, tau_rise=as_params_f[0], a1=as_params_f[1], tau_dec_1=as_params_f[2], a2=as_params_f[3], tau_dec_2=as_params_f[4], a3=as_params_f[5], tau_dec_3=as_params_f[6])
+#====AMPA====
+if ampa_fit:
+    # prepare the two 'scaled' components (direct and s.over) to fit the multi_decay_syn expressions to 
+    ad_g_J_values = np.array([a_g_J_unnorm_comp(t, ad_N_J, ad_tau_rise_J, ad_a1_J, ad_tau_dec_1_J, ad_a2_J, ad_tau_dec_2_J, ad_a3_J, ad_tau_dec_3_J) for t in time_points])
+    as_g_J_values = np.array([a_g_J_unnorm_comp(t, as_N_J, as_tau_rise_J, as_a1_J, as_tau_dec_1_J, as_a2_J, as_tau_dec_2_J, as_a3_J, as_tau_dec_3_J) for t in time_points])
 
-def a_g(t):
-    return ad_g_fitted(t) + as_g_fitted(t)
+    max_ad_g_J_values = ad_g_J_values.max()
+    max_as_g_J_values = as_g_J_values.max()
 
-# estimate error on waveform integral
-a_g_values = np.array([a_g(t) for t in time_points])
-integral_diff = np.abs(trapz(a_g_J_values_scaled_to_max - a_g_values, dx=0.001))
-print(integral_diff)
+    a_g_J_unnorm_values = ad_g_J_values/max_ad_g_J_values + a_sd_ratio_J*(as_g_J_values/max_as_g_J_values)
+    max_a_g_J_unnorm_values = a_g_J_unnorm_values.max()
+    a_g_J_values_norm = a_g_J_unnorm_values/max_a_g_J_unnorm_values
+    a_g_J_values_scaled_to_max = a_g_peak_J*a_g_J_values_norm
 
-fig = plt.figure()
-ax = fig.add_subplot(111)
-ax.plot(time_points, a_g_J_values_scaled_to_max, label="Jason's")
-ax.plot(time_points, a_g_values, label="NeuroML")
-ax.set_title('AMPA conductance waveform: direct+spillover')
-ax.set_xlabel('time (ms)')
-ax.set_ylabel('conductance (nS)')
-ax.legend()
-ax.grid()
+    ad_g_J_scaled_component = a_g_peak_J*ad_g_J_values/(max_ad_g_J_values*max_a_g_J_unnorm_values)
+    as_g_J_scaled_component = a_g_peak_J*a_sd_ratio_J*as_g_J_values/(max_as_g_J_values*max_a_g_J_unnorm_values)
 
+    # fitting
+    ad_params_f = curve_fit(a_g_comp, time_points, ad_g_J_scaled_component, [ad_tau_rise_J, ad_a1_J, ad_tau_dec_1_J, ad_a2_J, ad_tau_dec_2_J, ad_a3_J, ad_tau_dec_3_J])[0]
+    ad_g_fitted = partial(a_g_comp, tau_rise=ad_params_f[0], a1=ad_params_f[1], tau_dec_1=ad_params_f[2], a2=ad_params_f[3], tau_dec_2=ad_params_f[4], a3=ad_params_f[5], tau_dec_3=ad_params_f[6])
+    as_params_f = curve_fit(a_g_comp, time_points, as_g_J_scaled_component, [as_tau_rise_J, as_a1_J, as_tau_dec_1_J, as_a2_J, as_tau_dec_2_J, as_a3_J, as_tau_dec_3_J])[0]
+    as_g_fitted = partial(a_g_comp, tau_rise=as_params_f[0], a1=as_params_f[1], tau_dec_1=as_params_f[2], a2=as_params_f[3], tau_dec_2=as_params_f[4], a3=as_params_f[5], tau_dec_3=as_params_f[6])
+
+    def a_g(t):
+        return ad_g_fitted(t) + as_g_fitted(t)
+
+    # estimate error on waveform integral
+    a_g_values = np.array([a_g(t) for t in time_points])
+    integral_diff = np.abs(trapz(a_g_J_values_scaled_to_max - a_g_values, dx=0.001))
+    #print(integral_diff)
+
+    param_file.write("AMPA direct parameters: {params}\n".format(params=zip(['tau_rise', 'a1', 'tau_dec_1', 'a2', 'tau_dec_2', 'a3', 'tau_dec_a3'], ad_params_f)))
+    param_file.write("AMPA spillover parameters: {params}\n".format(params=zip(['tau_rise', 'a1', 'tau_dec_1', 'a2', 'tau_dec_2', 'a3', 'tau_dec_a3'], as_params_f)))    
+    a_fig = plt.figure()
+    a_ax = a_fig.add_subplot(111)
+    a_ax.plot(time_points, a_g_J_values_scaled_to_max, label="Jason's")
+    a_ax.plot(time_points, a_g_values, label="NeuroML")
+    a_ax.set_title('AMPA conductance waveform: direct+spillover')
+    a_ax.set_xlabel('time (ms)')
+    a_ax.set_ylabel('conductance (nS)')
+    a_ax.legend()
+    a_ax.grid()
+    
+#====NMDA====
+if nmda_fit:
+    voltage_points = np.arange(-80, -40, 0.001)
+    
+    n_g_unblock_J_values = np.array([n_g_unblock_J_unnorm(t, n_N_J, n_tau_rise_J, n_a1_J, n_tau_dec_1_J, n_a2_J, n_tau_dec_2_J) for t in time_points])
+    max_n_g_unblock_J_values = n_g_unblock_J_values.max()
+    n_g_unblock_J_norm_values = n_g_unblock_J_values/max_n_g_unblock_J_values
+    n_g_unblock_J_scaled = n_g_peak_J*n_g_unblock_J_norm_values
+
+    n_block_eric_values = np.array([n_block_eric(v, n_K1slope_J, n_K2slope_J, n_VK1on_J, n_VK1off_J, n_VK2off_J) for v in voltage_points])
+
+    n_g_unblock_params_f = curve_fit(g_subcomp, time_points, n_g_unblock_J_scaled, [n_tau_rise_J, n_g_peak_J, (n_tau_dec_1_J*n_a1_J + n_tau_dec_2_J*n_a2_J)/(n_a1_J + n_a2_J)])[0]
+    n_block_params_f = curve_fit(n_block, voltage_points, n_block_eric_values, [1, 0.0035])[0]
+    
+    n_g_unblock_fitted = partial(g_subcomp, tau_rise=n_g_unblock_params_f[0], a=n_g_unblock_params_f[1], tau_dec=n_g_unblock_params_f[2])
+    n_block_fitted = partial(n_block, eta=n_block_params_f[0], gamma=n_block_params_f[1])
+
+    n_g_unblock_values = np.array([n_g_unblock_fitted(t) for t in time_points])
+    n_block_values = np.array([n_block_fitted(v) for v in voltage_points])
+
+
+    param_file.write("NMDA (unbblocked) parameters: {params}\n".format(params=zip(['tau_rise', 'a', 'tau_dec'], n_g_unblock_params_f)))
+    param_file.write("NMDA block expression: {params}\n".format(params=zip(['eta', 'gamma'], n_block_params_f)))    
+
+    n_fig = plt.figure()
+    n_ax = n_fig.add_subplot(111)
+    n_ax.plot(time_points, n_g_unblock_J_scaled, label="Jason's")
+    n_ax.plot(time_points, n_g_unblock_values, label="NeuroML")
+    n_ax.set_title('NMDA waveform (unblocked)')
+    n_ax.set_xlabel('time (ms)')
+    n_ax.set_ylabel('conductance (nS)')
+    n_ax.legend()
+    n_ax.grid()
+
+    nb_fig = plt.figure()
+    nb_ax = nb_fig.add_subplot(111)
+    nb_ax.plot(voltage_points, n_block_eric_values, label="Jason's")
+    nb_ax.plot(voltage_points, n_block_values, label="NeuroML")
+    nb_ax.set_title('NMDA block')
+    nb_ax.set_xlabel('membrane potential (mV)')
+    nb_ax.set_ylabel('block factor')
+    nb_ax.legend()
+    nb_ax.grid()
+    
+param_file.close()
 plt.show()
