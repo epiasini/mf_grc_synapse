@@ -30,7 +30,7 @@ ax.plot(input_frequencies, nmda_factors, linestyle='', marker='o', color='g')
 
 ax.set_xlabel('input frequency (Hz)')
 ax.set_ylabel('scaling factor')
-ax.set_title('Average plasticity scaling factors')
+ax.set_title('Average plasticity scaling factors:\n with/without plasticity ratio')
 ax.legend()
 ax.grid()
 

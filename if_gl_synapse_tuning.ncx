@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<java version="1.6.0_22" class="java.beans.XMLDecoder">
+<java version="1.6.0_23" class="java.beans.XMLDecoder">
 
 <!-- This is a neuroConstruct project file. It's best to open this
 file with neuroConstruct, as opposed to editing it directly. 
@@ -92,7 +92,11 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
      <object class="ucl.physiol.neuroconstruct.project.packing.RandomCellPackingAdapter"/>
     </void>
     <void method="add">
-     <object class="ucl.physiol.neuroconstruct.project.packing.RandomCellPackingAdapter"/>
+     <object class="ucl.physiol.neuroconstruct.project.packing.RandomCellPackingAdapter">
+      <void property="maxNumberCells">
+       <int>4</int>
+      </void>
+     </object>
     </void>
     <void method="add">
      <object class="ucl.physiol.neuroconstruct.project.packing.RandomCellPackingAdapter"/>
@@ -412,7 +416,7 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
       <string>0</string>
      </void>
      <void property="valuePlotted">
-      <string>SPIKE:-48</string>
+      <string>SPIKE:0</string>
      </void>
     </object>
    </void>
@@ -443,7 +447,7 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
       <string>0</string>
      </void>
      <void property="valuePlotted">
-      <string>SPIKE:-48</string>
+      <string>SPIKE:-40</string>
      </void>
     </object>
    </void>
@@ -474,7 +478,7 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
       <string>0</string>
      </void>
      <void property="valuePlotted">
-      <string>SPIKE:-48</string>
+      <string>SPIKE:0</string>
      </void>
     </object>
    </void>
@@ -505,7 +509,7 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
       <string>0</string>
      </void>
      <void property="valuePlotted">
-      <string>SPIKE:-48</string>
+      <string>SPIKE:-40</string>
      </void>
     </object>
    </void>
@@ -592,7 +596,7 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
       <string>0</string>
      </void>
      <void property="valuePlotted">
-      <string>SPIKE:-48</string>
+      <string>SPIKE:0</string>
      </void>
     </object>
    </void>
@@ -623,7 +627,7 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
       <string>0</string>
      </void>
      <void property="valuePlotted">
-      <string>SPIKE:-48</string>
+      <string>SPIKE:-40</string>
      </void>
     </object>
    </void>
@@ -731,6 +735,9 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
     <string></string>
    </void>
   </void>
+  <void property="showShapePlot">
+   <boolean>true</boolean>
+  </void>
  </object>
  <object class="ucl.physiol.neuroconstruct.genesis.GenesisSettings"/>
  <object class="ucl.physiol.neuroconstruct.psics.PsicsSettings"/>
@@ -742,7 +749,7 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
    <float>100.0</float>
   </void>
   <void property="reference">
-   <string>Sim_216</string>
+   <string>Sim_227</string>
   </void>
   <void property="saveCopyGenSimFiles">
    <boolean>true</boolean>
@@ -787,7 +794,7 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
      <void property="rate">
       <object class="ucl.physiol.neuroconstruct.utils.NumberGenerator">
        <void property="fixedNum">
-        <float>0.03</float>
+        <float>0.08</float>
        </void>
        <void property="numberType">
         <int>11</int>
@@ -1175,9 +1182,15 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
     <void method="add">
      <string>NetConn_MFs_net_GrCs_net</string>
     </void>
+    <void method="add">
+     <string>MF_GrC_plast</string>
+    </void>
    </void>
    <void method="get">
     <string>AP speed</string>
+    <void method="add">
+     <float>3.4028235E38</float>
+    </void>
     <void method="add">
      <float>3.4028235E38</float>
     </void>
@@ -1205,13 +1218,10 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
          </object>
         </void>
         <void property="synapseType">
-         <string>AMPA</string>
+         <string>NMDA</string>
         </void>
         <void property="weightsGenerator">
          <object class="ucl.physiol.neuroconstruct.utils.WeightGenerator">
-          <void property="fixedNum">
-           <float>0.2</float>
-          </void>
           <void property="numberType">
            <int>11</int>
           </void>
@@ -1232,7 +1242,31 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
          </object>
         </void>
         <void property="synapseType">
-         <string>NMDA</string>
+         <string>AMPA_direct</string>
+        </void>
+        <void property="weightsGenerator">
+         <object class="ucl.physiol.neuroconstruct.utils.WeightGenerator">
+          <void property="numberType">
+           <int>11</int>
+          </void>
+         </object>
+        </void>
+       </object>
+      </void>
+      <void method="add">
+       <object class="ucl.physiol.neuroconstruct.project.SynapticProperties">
+        <void property="delayGenerator">
+         <object class="ucl.physiol.neuroconstruct.utils.NumberGenerator">
+          <void property="fixedNum">
+           <float>0.0</float>
+          </void>
+          <void property="numberType">
+           <int>11</int>
+          </void>
+         </object>
+        </void>
+        <void property="synapseType">
+         <string>AMPA_spillover</string>
         </void>
         <void property="weightsGenerator">
          <object class="ucl.physiol.neuroconstruct.utils.WeightGenerator">
@@ -1260,16 +1294,34 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
          </object>
         </void>
         <void property="synapseType">
-         <string>AMPA</string>
-        </void>
-        <void property="threshold">
-         <double>-48.0</double>
+         <string>AMPA_direct</string>
         </void>
         <void property="weightsGenerator">
          <object class="ucl.physiol.neuroconstruct.utils.WeightGenerator">
-          <void property="fixedNum">
-           <float>0.2</float>
+          <void property="numberType">
+           <int>11</int>
           </void>
+         </object>
+        </void>
+       </object>
+      </void>
+      <void method="add">
+       <object class="ucl.physiol.neuroconstruct.project.SynapticProperties">
+        <void property="delayGenerator">
+         <object class="ucl.physiol.neuroconstruct.utils.NumberGenerator">
+          <void property="fixedNum">
+           <float>0.0</float>
+          </void>
+          <void property="numberType">
+           <int>11</int>
+          </void>
+         </object>
+        </void>
+        <void property="synapseType">
+         <string>AMPA_spillover</string>
+        </void>
+        <void property="weightsGenerator">
+         <object class="ucl.physiol.neuroconstruct.utils.WeightGenerator">
           <void property="numberType">
            <int>11</int>
           </void>
@@ -1294,12 +1346,269 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
          </object>
         </void>
         <void property="synapseType">
-         <string>AMPA</string>
+         <string>NMDA</string>
         </void>
         <void property="weightsGenerator">
          <object class="ucl.physiol.neuroconstruct.utils.WeightGenerator">
+          <void property="numberType">
+           <int>11</int>
+          </void>
+         </object>
+        </void>
+       </object>
+      </void>
+      <void method="add">
+       <object class="ucl.physiol.neuroconstruct.project.SynapticProperties">
+        <void property="delayGenerator">
+         <object class="ucl.physiol.neuroconstruct.utils.NumberGenerator">
           <void property="fixedNum">
-           <float>0.2</float>
+           <float>0.0</float>
+          </void>
+          <void property="numberType">
+           <int>11</int>
+          </void>
+         </object>
+        </void>
+        <void property="synapseType">
+         <string>AMPA_direct</string>
+        </void>
+        <void property="weightsGenerator">
+         <object class="ucl.physiol.neuroconstruct.utils.WeightGenerator">
+          <void property="numberType">
+           <int>11</int>
+          </void>
+         </object>
+        </void>
+       </object>
+      </void>
+      <void method="add">
+       <object class="ucl.physiol.neuroconstruct.project.SynapticProperties">
+        <void property="delayGenerator">
+         <object class="ucl.physiol.neuroconstruct.utils.NumberGenerator">
+          <void property="fixedNum">
+           <float>0.0</float>
+          </void>
+          <void property="numberType">
+           <int>11</int>
+          </void>
+         </object>
+        </void>
+        <void property="synapseType">
+         <string>AMPA_spillover</string>
+        </void>
+        <void property="weightsGenerator">
+         <object class="ucl.physiol.neuroconstruct.utils.WeightGenerator">
+          <void property="numberType">
+           <int>11</int>
+          </void>
+         </object>
+        </void>
+       </object>
+      </void>
+     </object>
+    </void>
+    <void method="add">
+     <object class="java.util.Vector">
+      <void method="add">
+       <object class="ucl.physiol.neuroconstruct.project.SynapticProperties">
+        <void property="delayGenerator">
+         <object class="ucl.physiol.neuroconstruct.utils.NumberGenerator">
+          <void property="fixedNum">
+           <float>0.0</float>
+          </void>
+          <void property="numberType">
+           <int>11</int>
+          </void>
+         </object>
+        </void>
+        <void property="synapseType">
+         <string>AMPA_direct</string>
+        </void>
+        <void property="weightsGenerator">
+         <object class="ucl.physiol.neuroconstruct.utils.WeightGenerator">
+          <void property="distributionType">
+           <int>3</int>
+          </void>
+          <void property="inhomoExpr">
+           <object class="ucl.physiol.neuroconstruct.utils.equation.BinaryOperation">
+            <void property="first">
+             <object class="ucl.physiol.neuroconstruct.utils.equation.BinaryOperation">
+              <void property="first">
+               <object class="ucl.physiol.neuroconstruct.utils.equation.Constant">
+                <void property="value">
+                 <double>0.92</double>
+                </void>
+               </object>
+              </void>
+              <void property="operation">
+               <char>-</char>
+              </void>
+              <void property="second">
+               <object class="ucl.physiol.neuroconstruct.utils.equation.BinaryOperation">
+                <void property="first">
+                 <object class="ucl.physiol.neuroconstruct.utils.equation.Constant">
+                  <void property="value">
+                   <double>0.004</double>
+                  </void>
+                 </object>
+                </void>
+                <void property="operation">
+                 <char>*</char>
+                </void>
+                <void property="second">
+                 <object class="ucl.physiol.neuroconstruct.utils.equation.Constant">
+                  <void property="value">
+                   <double>100.0</double>
+                  </void>
+                 </object>
+                </void>
+               </object>
+              </void>
+             </object>
+            </void>
+            <void property="operation">
+             <char>+</char>
+            </void>
+            <void property="second">
+             <object class="ucl.physiol.neuroconstruct.utils.equation.BinaryOperation">
+              <void property="first">
+               <object class="ucl.physiol.neuroconstruct.utils.equation.Constant">
+                <void property="value">
+                 <double>1.0E-5</double>
+                </void>
+               </object>
+              </void>
+              <void property="operation">
+               <char>*</char>
+              </void>
+              <void property="second">
+               <object class="ucl.physiol.neuroconstruct.utils.equation.BinaryOperation">
+                <void property="first">
+                 <object class="ucl.physiol.neuroconstruct.utils.equation.Constant">
+                  <void property="value">
+                   <double>100.0</double>
+                  </void>
+                 </object>
+                </void>
+                <void property="operation">
+                 <char>^</char>
+                </void>
+                <void property="second">
+                 <object class="ucl.physiol.neuroconstruct.utils.equation.Constant">
+                  <void property="value">
+                   <double>2.0</double>
+                  </void>
+                 </object>
+                </void>
+               </object>
+              </void>
+             </object>
+            </void>
+           </object>
+          </void>
+          <void property="numberType">
+           <int>11</int>
+          </void>
+         </object>
+        </void>
+       </object>
+      </void>
+      <void method="add">
+       <object class="ucl.physiol.neuroconstruct.project.SynapticProperties">
+        <void property="delayGenerator">
+         <object class="ucl.physiol.neuroconstruct.utils.NumberGenerator">
+          <void property="fixedNum">
+           <float>0.0</float>
+          </void>
+          <void property="numberType">
+           <int>11</int>
+          </void>
+         </object>
+        </void>
+        <void property="synapseType">
+         <string>AMPA_spillover</string>
+        </void>
+        <void property="weightsGenerator">
+         <object class="ucl.physiol.neuroconstruct.utils.WeightGenerator">
+          <void property="distributionType">
+           <int>3</int>
+          </void>
+          <void property="inhomoExpr">
+           <object class="ucl.physiol.neuroconstruct.utils.equation.BinaryOperation">
+            <void property="first">
+             <object class="ucl.physiol.neuroconstruct.utils.equation.BinaryOperation">
+              <void property="first">
+               <object class="ucl.physiol.neuroconstruct.utils.equation.Constant">
+                <void property="value">
+                 <double>0.92</double>
+                </void>
+               </object>
+              </void>
+              <void property="operation">
+               <char>-</char>
+              </void>
+              <void property="second">
+               <object class="ucl.physiol.neuroconstruct.utils.equation.BinaryOperation">
+                <void property="first">
+                 <object class="ucl.physiol.neuroconstruct.utils.equation.Constant">
+                  <void property="value">
+                   <double>0.004</double>
+                  </void>
+                 </object>
+                </void>
+                <void property="operation">
+                 <char>*</char>
+                </void>
+                <void property="second">
+                 <object class="ucl.physiol.neuroconstruct.utils.equation.Constant">
+                  <void property="value">
+                   <double>100.0</double>
+                  </void>
+                 </object>
+                </void>
+               </object>
+              </void>
+             </object>
+            </void>
+            <void property="operation">
+             <char>+</char>
+            </void>
+            <void property="second">
+             <object class="ucl.physiol.neuroconstruct.utils.equation.BinaryOperation">
+              <void property="first">
+               <object class="ucl.physiol.neuroconstruct.utils.equation.Constant">
+                <void property="value">
+                 <double>1.0E-5</double>
+                </void>
+               </object>
+              </void>
+              <void property="operation">
+               <char>*</char>
+              </void>
+              <void property="second">
+               <object class="ucl.physiol.neuroconstruct.utils.equation.BinaryOperation">
+                <void property="first">
+                 <object class="ucl.physiol.neuroconstruct.utils.equation.Constant">
+                  <void property="value">
+                   <double>100.0</double>
+                  </void>
+                 </object>
+                </void>
+                <void property="operation">
+                 <char>^</char>
+                </void>
+                <void property="second">
+                 <object class="ucl.physiol.neuroconstruct.utils.equation.Constant">
+                  <void property="value">
+                   <double>2.0</double>
+                  </void>
+                 </object>
+                </void>
+               </object>
+              </void>
+             </object>
+            </void>
+           </object>
           </void>
           <void property="numberType">
            <int>11</int>
@@ -1325,6 +1634,86 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
         </void>
         <void property="weightsGenerator">
          <object class="ucl.physiol.neuroconstruct.utils.WeightGenerator">
+          <void property="distributionType">
+           <int>3</int>
+          </void>
+          <void property="inhomoExpr">
+           <object class="ucl.physiol.neuroconstruct.utils.equation.BinaryOperation">
+            <void property="first">
+             <object class="ucl.physiol.neuroconstruct.utils.equation.BinaryOperation">
+              <void property="first">
+               <object class="ucl.physiol.neuroconstruct.utils.equation.Constant">
+                <void property="value">
+                 <double>0.94</double>
+                </void>
+               </object>
+              </void>
+              <void property="operation">
+               <char>-</char>
+              </void>
+              <void property="second">
+               <object class="ucl.physiol.neuroconstruct.utils.equation.BinaryOperation">
+                <void property="first">
+                 <object class="ucl.physiol.neuroconstruct.utils.equation.Constant">
+                  <void property="value">
+                   <double>0.0032</double>
+                  </void>
+                 </object>
+                </void>
+                <void property="operation">
+                 <char>*</char>
+                </void>
+                <void property="second">
+                 <object class="ucl.physiol.neuroconstruct.utils.equation.Constant">
+                  <void property="value">
+                   <double>100.0</double>
+                  </void>
+                 </object>
+                </void>
+               </object>
+              </void>
+             </object>
+            </void>
+            <void property="operation">
+             <char>+</char>
+            </void>
+            <void property="second">
+             <object class="ucl.physiol.neuroconstruct.utils.equation.BinaryOperation">
+              <void property="first">
+               <object class="ucl.physiol.neuroconstruct.utils.equation.Constant">
+                <void property="value">
+                 <double>8.5E-6</double>
+                </void>
+               </object>
+              </void>
+              <void property="operation">
+               <char>*</char>
+              </void>
+              <void property="second">
+               <object class="ucl.physiol.neuroconstruct.utils.equation.BinaryOperation">
+                <void property="first">
+                 <object class="ucl.physiol.neuroconstruct.utils.equation.Constant">
+                  <void property="value">
+                   <double>100.0</double>
+                  </void>
+                 </object>
+                </void>
+                <void property="operation">
+                 <char>^</char>
+                </void>
+                <void property="second">
+                 <object class="ucl.physiol.neuroconstruct.utils.equation.Constant">
+                  <void property="value">
+                   <double>2.0</double>
+                  </void>
+                 </object>
+                </void>
+               </object>
+              </void>
+             </object>
+            </void>
+           </object>
+          </void>
           <void property="numberType">
            <int>11</int>
           </void>
@@ -1337,6 +1726,9 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
    </void>
    <void method="get">
     <string>Max/min</string>
+    <void method="add">
+     <object class="ucl.physiol.neuroconstruct.project.MaxMinLength"/>
+    </void>
     <void method="add">
      <object class="ucl.physiol.neuroconstruct.project.MaxMinLength"/>
     </void>
@@ -1370,6 +1762,13 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
       </void>
      </object>
     </void>
+    <void method="add">
+     <object class="ucl.physiol.neuroconstruct.project.SearchPattern">
+      <void property="type">
+       <int>0</int>
+      </void>
+     </object>
+    </void>
    </void>
    <void method="get">
     <string>Source</string>
@@ -1381,6 +1780,9 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
     </void>
     <void method="add">
      <string>MFs_net</string>
+    </void>
+    <void method="add">
+     <string>MFs</string>
     </void>
    </void>
    <void method="get">
@@ -1414,6 +1816,13 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
       </void>
      </object>
     </void>
+    <void method="add">
+     <object class="ucl.physiol.neuroconstruct.project.ConnectivityConditions">
+      <void property="allowAutapses">
+       <boolean>false</boolean>
+      </void>
+     </object>
+    </void>
    </void>
    <void method="get">
     <string>Target</string>
@@ -1425,6 +1834,9 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
     </void>
     <void method="add">
      <string>GrCs_net</string>
+    </void>
+    <void method="add">
+     <string>GrCs</string>
     </void>
    </void>
   </void>
