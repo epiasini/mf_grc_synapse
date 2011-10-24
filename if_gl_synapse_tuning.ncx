@@ -749,7 +749,7 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
    <float>100.0</float>
   </void>
   <void property="reference">
-   <string>Sim_227</string>
+   <string>Sim_259</string>
   </void>
   <void property="saveCopyGenSimFiles">
    <boolean>true</boolean>
@@ -794,7 +794,7 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
      <void property="rate">
       <object class="ucl.physiol.neuroconstruct.utils.NumberGenerator">
        <void property="fixedNum">
-        <float>0.08</float>
+        <float>0.14</float>
        </void>
        <void property="numberType">
         <int>11</int>
@@ -1042,7 +1042,7 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
       </void>
      </void>
      <void property="description">
-      <string>tuning the random spike frequency on a single MF/single GrC.</string>
+      <string>tuning the random spike frequency on a single MF/single GrC. No plasticity correction.</string>
      </void>
      <void property="inputs">
       <void method="add">
@@ -1164,6 +1164,51 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
      </void>
      <void property="simDuration">
       <float>100.0</float>
+     </void>
+    </object>
+   </void>
+   <void method="add">
+    <object class="ucl.physiol.neuroconstruct.project.SimConfig">
+     <void property="cellGroups">
+      <void method="add">
+       <string>MFs</string>
+      </void>
+      <void method="add">
+       <string>GrCs</string>
+      </void>
+     </void>
+     <void property="description">
+      <string>four MFs, one GrC, plasticity correction factor ON (but remember to change the numerical value according to the input frequency)</string>
+     </void>
+     <void property="inputs">
+      <void method="add">
+       <string>MF_in_random_single</string>
+      </void>
+     </void>
+     <void property="name">
+      <string>single_random_spike_with_plast</string>
+     </void>
+     <void property="netConns">
+      <void method="add">
+       <string>MF_GrC_plast</string>
+      </void>
+     </void>
+     <void property="plots">
+      <void method="add">
+       <string>GrCs_v</string>
+      </void>
+      <void method="add">
+       <string>MFs_spike</string>
+      </void>
+      <void method="add">
+       <string>MFs_v</string>
+      </void>
+      <void method="add">
+       <string>GrCs_spike</string>
+      </void>
+     </void>
+     <void property="simDuration">
+      <float>10000.0</float>
      </void>
     </object>
    </void>
@@ -1458,7 +1503,7 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
                 <void property="second">
                  <object class="ucl.physiol.neuroconstruct.utils.equation.Constant">
                   <void property="value">
-                   <double>100.0</double>
+                   <double>140.0</double>
                   </void>
                  </object>
                 </void>
@@ -1486,7 +1531,7 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
                 <void property="first">
                  <object class="ucl.physiol.neuroconstruct.utils.equation.Constant">
                   <void property="value">
-                   <double>100.0</double>
+                   <double>140.0</double>
                   </void>
                  </object>
                 </void>
@@ -1562,7 +1607,7 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
                 <void property="second">
                  <object class="ucl.physiol.neuroconstruct.utils.equation.Constant">
                   <void property="value">
-                   <double>100.0</double>
+                   <double>140.0</double>
                   </void>
                  </object>
                 </void>
@@ -1590,7 +1635,7 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
                 <void property="first">
                  <object class="ucl.physiol.neuroconstruct.utils.equation.Constant">
                   <void property="value">
-                   <double>100.0</double>
+                   <double>140.0</double>
                   </void>
                  </object>
                 </void>
@@ -1666,7 +1711,7 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
                 <void property="second">
                  <object class="ucl.physiol.neuroconstruct.utils.equation.Constant">
                   <void property="value">
-                   <double>100.0</double>
+                   <double>140.0</double>
                   </void>
                  </object>
                 </void>
@@ -1694,7 +1739,7 @@ If NEURON or GENESIS are installed, the cell can be simulated via tab Export.</s
                 <void property="first">
                  <object class="ucl.physiol.neuroconstruct.utils.equation.Constant">
                   <void property="value">
-                   <double>100.0</double>
+                   <double>140.0</double>
                   </void>
                  </object>
                 </void>
