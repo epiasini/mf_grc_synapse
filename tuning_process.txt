@@ -91,3 +91,37 @@ STIM  NOPLAST   PLAST
 120   294.6	187.2
 130   315.3	202.6
 140   325.3	226.1
+
+
+++++++++++++++
+++25/10/2011++
+++++++++++++++
+Since these numbers are obtained with 4 MFs stimulating a single GrC, I'll fix the 'activity point' of the GrC model at '4 stimuli at 30Hz'. Active stimulus frequency will be then at 3oHz, just as before the retuning of the model (but note that now we need 4 active inputs to fire in absence of inhibition). I will now determine how many active inputs it takes to activate a cell for a range of inhibitory current values.
+
+
+NUMBER OF ACTIVE  |  BIAS CURRENT  |	FIRING
+INPUTS REQUIRED   |  	 (pA) 	   |	 RATE
+TO FIRE           |		   |	 (Hz)
+---------------------------------------------------
+4			0		6.4
+5			-10		5.3
+6			-15		6
+7			-20		8
+
+
+fixed firing at 120Hz.
+
+NUMBER OF ACTIVE  |  BIAS CURRENT  |	FIRING
+INPUTS REQUIRED   |  	 (pA) 	   |	 RATE
+TO FIRE           |		   |	 (Hz)
+---------------------------------------------------
+1			0		2.5
+2			-10		5.5
+3			-25		8
+4			-45		6.5
+5			-60		5.5
+6			-75		6.5
+7			-85		8.5
+8			-100		3-15
+
+
