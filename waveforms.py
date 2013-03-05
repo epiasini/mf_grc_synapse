@@ -48,9 +48,9 @@ n_VK2off_J = -45.895
 pulse_duration = 2*as_tau_dec_3_J
 time_points = np.arange(0.01, pulse_duration, 0.001)
 
-ampa_fit=False
-nmda_fit=False
-p7_9_fit=True
+ampa_fit=True
+nmda_fit=True
+p7_9_fit=False
 
 def peak_time(tau_rise, tau_dec):
     return (tau_dec*tau_rise)/(tau_dec-tau_rise)*log(tau_dec/tau_rise)
@@ -137,13 +137,13 @@ if ampa_fit:
     # estimate error on waveform integral
     a_g_values = np.array([a_g(t) for t in time_points])
     integral_diff = np.abs(trapz(a_g_J_values_scaled_to_max - a_g_values, dx=0.001))
-    #print(integral_diff)
+    print(integral_diff)
 
     param_file.write("AMPA direct parameters: {params}\n".format(params=zip(['tau_rise', 'a1', 'tau_dec_1', 'a2', 'tau_dec_2', 'a3', 'tau_dec_a3'], ad_params_f)))
     param_file.write("AMPA spillover parameters: {params}\n".format(params=zip(['tau_rise', 'a1', 'tau_dec_1', 'a2', 'tau_dec_2', 'a3', 'tau_dec_a3'], as_params_f)))    
     a_fig = plt.figure()
     a_ax = a_fig.add_subplot(111)
-    a_ax.plot(time_points, a_g_J_values_scaled_to_max, label="Jason's")
+    a_ax.plot(time_points, a_g_J_values_scaled_to_max, label="Rothman 2009")
     a_ax.plot(time_points, a_g_values, label="NeuroML")
     a_ax.set_title('AMPA conductance waveform: direct+spillover')
     a_ax.set_xlabel('time (ms)')
@@ -171,9 +171,12 @@ if nmda_fit:
     n_g_unblock_values = np.array([n_g_unblock_fitted(t) for t in time_points])
     n_block_values = np.array([n_block_fitted(v) for v in voltage_points])
 
+    integral_diff = np.abs(trapz(n_g_unblock_J_scaled - n_g_unblock_values, dx=0.001))
+    print(integral_diff)
+
 
     param_file.write("NMDA (unbblocked) parameters: {params}\n".format(params=zip(['tau_rise', 'a', 'tau_dec'], n_g_unblock_params_f)))
-    param_file.write("NMDA block expression: {params}\n".format(params=zip(['eta', 'gamma'], n_block_params_f)))    
+    param_file.write("NMDA block expression: {params}\n".format(params=zip(['eta', 'gamma'], n_block_params_f)))
 
     n_fig = plt.figure()
     n_ax = n_fig.add_subplot(111)
@@ -187,7 +190,7 @@ if nmda_fit:
 
     nb_fig = plt.figure()
     nb_ax = nb_fig.add_subplot(111)
-    nb_ax.plot(voltage_points, n_block_eric_values, label="Jason's")
+    nb_ax.plot(voltage_points, n_block_eric_values, label="Rothman 2009")
     nb_ax.plot(voltage_points, n_block_values, label="NeuroML")
     nb_ax.set_title('NMDA block')
     nb_ax.set_xlabel('membrane potential (mV)')
