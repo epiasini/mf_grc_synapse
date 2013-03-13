@@ -5,9 +5,8 @@ import numpy as np
 import scipy.signal
 from matplotlib import pyplot as plt
 
-from waveforms import a_g_comp
 
-import pdb
+from waveforms import a_g_comp
 
 DATA_DIR = "/home/ucbtepi/doc/jason_data/JasonsIAFmodel/Jason_Laurence_AMPA_NMDA_Trains"
 NMDA_DIR = DATA_DIR + "/NMDA"
@@ -34,9 +33,9 @@ class Rothman_AMPA_STP(inspyred.benchmarks.Benchmark):
                                                                                              freq)))
                 self.exp_data.append(np.loadtxt(AMPA_DIR + "/Avg_AMPA_{0}hz_G{1}.txt".format(freq,
                                                                                              trial)))
-                self.binary_exp_pulses.append(np.zeros(shape=self.exp_data[-1].shape[0]))
-                self.binary_exp_pulses[-1][np.searchsorted(self.exp_data[-1][:,0],
-                                                          self.exp_pulses[-1])] = 1
+                #self.binary_exp_pulses.append(np.zeros(shape=self.exp_data[-1].shape[0]))
+                #self.binary_exp_pulses[-1][np.searchsorted(self.exp_data[-1][:,0],
+                #                                          self.exp_pulses[-1])] = 1
                 self.single_waveform_lengths.append(np.searchsorted(self.exp_data[-1][:,0],
                                                                     PULSE_CUTOFF))
         # needed to generate random values for tau_rec in the _open_
@@ -85,32 +84,30 @@ class Rothman_AMPA_STP(inspyred.benchmarks.Benchmark):
         # first pulse.
         return r
 
-    def synthetic_conductance_signal(self, time_points, pulse_train, binary_pulse_train, single_waveform_length, tau_rise, a1, a2, a3, tau_dec1, tau_dec2, tau_dec3, u_se, tau_rec):
+    def synthetic_conductance_signal(self, time_points, pulse_train, single_waveform_length, tau_rise, a1, a2, a3, tau_dec1, tau_dec2, tau_dec3, u_se, tau_rec):
         # this is meant to be used for a single component (direct or
         # spillover)
+        n_time_points = time_points.shape[0]
         dep_factors = self.dep_table(pulse_train, u_se, tau_rec)
-        single_pulse_waveform = np.array([a_g_comp(t, tau_rise, a1, tau_dec1, a2, tau_dec2, a3, tau_dec3) for t in time_points[0:single_waveform_length]])
-        raise Exception()
-        #signal = np.zeros(shape=time_points.shape[0])
-        #for n, pulse in enumerate(pulse_train):
-        #    print n, pulse
-        #    start = np.searchsorted(time_points, pulse)
-        #    signal[start:start+single_pulse_waveform.shape[0]] += single_pulse_waveform * dep_factors[n]
-        #return signal
-        return scipy.signal.fftconvolve(binary_pulse_train, single_pulse_waveform)[:time_points.shape[0]] #this doesn't consider plasticity!
+        single_pulse_waveform = a_g_comp(time_points[0:single_waveform_length], tau_rise, a1, tau_dec1, a2, tau_dec2, a3, tau_dec3)
+        signal = np.zeros(shape=n_time_points)
+        for n, pulse in enumerate(pulse_train):
+            start = np.searchsorted(time_points, pulse)
+            end = start + single_waveform_length
+            signal[start:end] += (single_pulse_waveform * dep_factors[n])[:single_pulse_waveform.shape[0]-(end - n_time_points)]
+        return signal
 
     def fitness_to_experiment(self, cs):
-        print 'a'
         distances = []
         for k, ep in enumerate(self.exp_pulses):
             signal_direct = self.synthetic_conductance_signal(self.exp_data[k][:,0],
                                                               ep,
-                                                              self.binary_exp_pulses[k],
+                                                              #self.binary_exp_pulses[k],
                                                               self.single_waveform_lengths[k],
                                                               *cs[:9])
             signal_spillover = self.synthetic_conductance_signal(self.exp_data[k][:,0],
                                                                  ep,
-                                                                 self.binary_exp_pulses[k],
+                                                                 #self.binary_exp_pulses[k],
                                                                  self.single_waveform_lengths[k],
                                                                  *cs[9:])
             distances.append(np.linalg.norm(signal_direct+signal_spillover-self.exp_data[k][:,1]))
@@ -144,8 +141,8 @@ def main():
                                  generator=problem.generator,
                                  maximize=problem.maximize,
                                  bounder=problem.bounder,
-                                 max_evaluations=18,
-                                 pop_size=6,
+                                 max_evaluations=600,
+                                 pop_size=50,
                                  neighborhood_size=5)
     # Sort and print the best individual
     final_pop.sort(reverse=True)
@@ -153,3 +150,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+#to profile, from shell:
+#python -m cProfile -o output.pstats tsodyks_markram_plasticity_fit.py
+#gprof2dot.py -f pstats output.pstats | dot -Tpng -o output.png

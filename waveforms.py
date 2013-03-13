@@ -53,7 +53,7 @@ nmda_fit=True
 p7_9_fit=False
 
 def peak_time(tau_rise, tau_dec):
-    return (tau_dec*tau_rise)/(tau_dec-tau_rise)*log(tau_dec/tau_rise)
+    return np.divide(tau_dec*tau_rise, tau_dec-tau_rise)*log(tau_dec/tau_rise)
 
 def norm_factor(tau_rise, tau_dec):
     return 1./(exp(-peak_time(tau_dec, tau_rise)/tau_dec) - exp(-peak_time(tau_dec, tau_rise)/tau_rise))
