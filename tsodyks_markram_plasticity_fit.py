@@ -2,6 +2,7 @@ import random
 import time
 import inspyred
 import numpy as np
+import scipy.signal
 from matplotlib import pyplot as plt
 
 from waveforms import a_g_comp
@@ -25,12 +26,19 @@ class Rothman_AMPA_STP(inspyred.benchmarks.Benchmark):
         self.n_trials = 4
         self.exp_data = []
         self.exp_pulses = []
+        self.binary_exp_pulses = []
+        self.single_waveform_lengths = []
         for freq in self.frequencies:
             for trial in range(self.n_trials):
                 self.exp_pulses.append(np.loadtxt(TIME_DIR + "/gp{0}_{1}hz_times.txt".format(trial,
                                                                                              freq)))
                 self.exp_data.append(np.loadtxt(AMPA_DIR + "/Avg_AMPA_{0}hz_G{1}.txt".format(freq,
                                                                                              trial)))
+                self.binary_exp_pulses.append(np.zeros(shape=self.exp_data[-1].shape[0]))
+                self.binary_exp_pulses[-1][np.searchsorted(self.exp_data[-1][:,0],
+                                                          self.exp_pulses[-1])] = 1
+                self.single_waveform_lengths.append(np.searchsorted(self.exp_data[-1][:,0],
+                                                                    PULSE_CUTOFF))
         # needed to generate random values for tau_rec in the _open_
         # interval (0,2)
         self.epsilon = 1e-15
@@ -77,24 +85,35 @@ class Rothman_AMPA_STP(inspyred.benchmarks.Benchmark):
         # first pulse.
         return r
 
-    def synthetic_conductance_signal(self, time_points, pulse_train, tau_rise, a1, a2, a3, tau_dec1, tau_dec2, tau_dec3, u_se, tau_rec):
+    def synthetic_conductance_signal(self, time_points, pulse_train, binary_pulse_train, single_waveform_length, tau_rise, a1, a2, a3, tau_dec1, tau_dec2, tau_dec3, u_se, tau_rec):
         # this is meant to be used for a single component (direct or
         # spillover)
         dep_factors = self.dep_table(pulse_train, u_se, tau_rec)
-        single_pulse_waveform = np.array([a_g_comp(t, tau_rise, a1, tau_dec1, a2, tau_dec2, a3, tau_dec3) for t in time_points[0:np.searchsorted(time_points, PULSE_CUTOFF)]])
-        signal = np.zeros(shape=time_points.shape[0])
-        for n, pulse in enumerate(pulse_train):
-            print n, pulse
-            start = np.searchsorted(time_points, pulse)
-            signal[start:start+single_pulse_waveform.shape[0]] += single_pulse_waveform * dep_factors[n]
-        return signal
+        single_pulse_waveform = np.array([a_g_comp(t, tau_rise, a1, tau_dec1, a2, tau_dec2, a3, tau_dec3) for t in time_points[0:single_waveform_length]])
+        raise Exception()
+        #signal = np.zeros(shape=time_points.shape[0])
+        #for n, pulse in enumerate(pulse_train):
+        #    print n, pulse
+        #    start = np.searchsorted(time_points, pulse)
+        #    signal[start:start+single_pulse_waveform.shape[0]] += single_pulse_waveform * dep_factors[n]
+        #return signal
+        return scipy.signal.fftconvolve(binary_pulse_train, single_pulse_waveform)[:time_points.shape[0]] #this doesn't consider plasticity!
 
     def fitness_to_experiment(self, cs):
+        print 'a'
         distances = []
         for k, ep in enumerate(self.exp_pulses):
-            signal_direct = self.synthetic_conductance_signal(self.exp_data[k][:,0], ep, *cs[:9])
-            signal_spillover = self.synthetic_conductance_signal(self.exp_data[k][:,0], ep, *cs[9:])
-            distance = np.linalg.norm(signal_direct+signal_spillover-self.exp_data[k][:,1])
+            signal_direct = self.synthetic_conductance_signal(self.exp_data[k][:,0],
+                                                              ep,
+                                                              self.binary_exp_pulses[k],
+                                                              self.single_waveform_lengths[k],
+                                                              *cs[:9])
+            signal_spillover = self.synthetic_conductance_signal(self.exp_data[k][:,0],
+                                                                 ep,
+                                                                 self.binary_exp_pulses[k],
+                                                                 self.single_waveform_lengths[k],
+                                                                 *cs[9:])
+            distances.append(np.linalg.norm(signal_direct+signal_spillover-self.exp_data[k][:,1]))
         return sum(distances)
 
     def generator(self, random, args):
@@ -125,8 +144,8 @@ def main():
                                  generator=problem.generator,
                                  maximize=problem.maximize,
                                  bounder=problem.bounder,
-                                 max_evaluations=5000,
-                                 pop_size=100,
+                                 max_evaluations=18,
+                                 pop_size=6,
                                  neighborhood_size=5)
     # Sort and print the best individual
     final_pop.sort(reverse=True)
