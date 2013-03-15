@@ -45,25 +45,25 @@ class Rothman_AMPA_STP(inspyred.benchmarks.Benchmark):
 
         self.maximize = False
 
-        self.bounds = [(0., 2.), # d_delay **direct (waveform)**
-                       (0.1, 0.5), # d_tau_rise
-                       (0.12, 1.6), # d_a1
-                       (0.06, 0.50), # d_a2
-                       (0.01, 0.15), # d_a3
-                       (0.153, 0.46), # d_tau_dec1
-                       (1.45, 2.7), # d_tau_dec2
-                       (15., 25.), # d_tau_dec3
-                       (0., 1.), # d_u_se   **direct (STD)**
-                       (30., 100.), # d_tau_dep
-                       (0.4, 1.2), # s_tau_rise **spillover (waveform)**
-                       (0.05, 0.31), # s_a1
-                       (0.05, 0.43), # s_a2
-                       (0.005, 0.025), # s_a3
-                       (0.5, 1.001), # s_tau_dec1
-                       (3., 11.), # s_tau_dec2
-                       (25.1, 45.), #s_tau_dec3
-                       (0., .5), # s_u_se   **spillover (STD)**
-                       (23., 100.)] # s_tau_dep
+        self.bounds = [(0.001, 2.), # d_delay **direct (waveform)**
+                       (0.1, 0.41), # d_tau_rise
+                       (0.4, 4.5), # d_a1
+                       (0.07, 0.65), # d_a2
+                       (0.0001, 0.055), # d_a3
+                       (0.05, 0.35), # d_tau_dec1
+                       (1.35, 2.45), # d_tau_dec2
+                       (15., 23.), # d_tau_dec3
+                       (0.01, 0.8), # d_u_se   **direct (STD)**
+                       (9., 150.), # d_tau_dep
+                       (0.1, 1.2), # s_tau_rise **spillover (waveform)**
+                       (0.005, 0.21), # s_a1
+                       (0.005, 0.42), # s_a2
+                       (0.005, 0.104), # s_a3
+                       (0.5, 1.53), # s_tau_dec1
+                       (7.0, 8.0), # s_tau_dec2
+                       (28.1, 50.), #s_tau_dec3
+                       (0.001, .8), # s_u_se   **spillover (STD)**
+                       (2., 80.)] # s_tau_dep
 
 problem = Rothman_AMPA_STP()
 
@@ -106,25 +106,27 @@ def synthetic_conductance_signal(time_points, pulse_train, single_waveform_lengt
 def fitness_to_experiment(cs):
     distances = []
     for k, ep in enumerate(problem.exp_pulses):
-        signal_direct = synthetic_conductance_signal(problem.exp_data[k][:,0],
+        timepoints = problem.exp_data[k][:,0]
+        signal_direct = synthetic_conductance_signal(timepoints,
                                                      ep,
                                                      #self.binary_exp_pulses[k],
                                                      problem.single_waveform_lengths[k],
                                                      problem.timestep_sizes[k],
                                                      cs[0],
                                                      *cs[1:10])
-        signal_spillover = synthetic_conductance_signal(problem.exp_data[k][:,0],
+        signal_spillover = synthetic_conductance_signal(timepoints,
                                                         ep,
                                                         #self.binary_exp_pulses[k],
                                                         problem.single_waveform_lengths[k],
                                                         problem.timestep_sizes[k],
                                                         cs[0],
                                                         *cs[10:])
-        # fitness is defined as the L2 norm between the synthetic
-        # and the experimental signal divided by the number of
-        # time points, to avoid unfair weighing in favour of
-        # slower recordings.
-        distances.append(np.linalg.norm(signal_direct+signal_spillover-problem.exp_data[k][:,1])/problem.exp_data[k].shape[0])
+        # fitness is defined as the L2 norm between the synthetic and
+        # the experimental signal divided by the square root of the
+        # number of time points, to avoid unfair weighing in favour of
+        # longer recordings (in other words, this should give equal
+        # weight to every time point in every recording).
+        distances.append(np.linalg.norm(signal_direct+signal_spillover-problem.exp_data[k][:,1])/np.sqrt(timepoints.shape[0]))# + 0.15 * np.abs(normalised_difference_trace.sum()))
     return sum(distances)
 
 def generator(random, args):
@@ -138,28 +140,39 @@ def evaluator(candidates, args):
 def main(plot=False):
     prng = random.Random()
     prng.seed(int(time.time()))
+    max_evaluations = 21000
+    pop_size = 280
 
     algorithm = inspyred.swarm.PSO(prng)
+    #algorithm = inspyred.ec.EDA(prng)
     algorithm.topology = inspyred.swarm.topologies.ring_topology
     algorithm.terminator = inspyred.ec.terminators.evaluation_termination
+    #algorithm.terminator = [inspyred.ec.terminators.evaluation_termination,
+    #                        inspyred.ec.terminators.diversity_termination]
     final_pop = algorithm.evolve(evaluator=inspyred.ec.evaluators.parallel_evaluation_mp,
                                  mp_evaluator=evaluator,
                                  mp_nprocs=7,
                                  generator=generator,
                                  maximize=problem.maximize,
                                  bounder=bounder,
-                                 max_evaluations=4200,
-                                 pop_size=100,
-                                 neighborhood_size=4)
+                                 max_evaluations=max_evaluations,
+                                 pop_size=pop_size,
+                                 neighborhood_size=5,
+                                 num_elites=1)
     # Sort and print the best individual
     final_pop.sort(reverse=True)
-    print("direct:    {0}".format(final_pop[0].candidate[:10]))
-    print("spillover: {0}".format(final_pop[0].candidate[10:]))
+    selected_candidate = final_pop[0].candidate[:19]
+    print("direct:    {0}".format(selected_candidate[:10]))
+    print("spillover: {0}".format(selected_candidate[10:]))
     print("fitness:   {0}".format(final_pop[0].fitness))
     if plot:
-        plot_optimisation_results(problem, final_pop[0].candidate)
+        plot_optimisation_results(problem,
+                                  selected_candidate,
+                                  final_pop[0].fitness,
+                                  max_evaluations,
+                                  pop_size)
 
-def plot_optimisation_results(problem, candidate):
+def plot_optimisation_results(problem, candidate, fitness, max_evaluations, pop_size):
     fig, ax = plt.subplots(nrows=7, ncols=4, figsize=(140,80), dpi=500)
     for k, ep in enumerate(problem.exp_pulses):
         timepoints = problem.exp_data[k][:,0]
@@ -177,11 +190,12 @@ def plot_optimisation_results(problem, candidate):
                                                         problem.timestep_sizes[k],
                                                         candidate[0],
                                                         *candidate[10:])
-        ax.flat[k].plot(timepoints, problem.exp_data[k][:,1], color='b')
+        ax.flat[k].plot(timepoints, problem.exp_data[k][:,1], color='b', linewidth=1.5)
         ax.flat[k].scatter(ep, np.zeros(shape=ep.shape)-0.05, color='r')
-        ax.flat[k].plot(timepoints, signal_direct+signal_spillover, linewidth=2.5, color='g')
+        ax.flat[k].plot(timepoints, signal_direct+signal_spillover, linewidth=2, color='g')
         ax.flat[k].plot(timepoints, signal_direct, color='r')
         ax.flat[k].plot(timepoints, signal_spillover, color='c')
+    fig.suptitle('parameters: {0}\n fitness: {1} max_evaluations: {2} pop_size: {3}'.format(candidate, fitness, max_evaluations, pop_size))
     plt.savefig('Rothman_AMPA_TM_fit_{0}.png'.format(time.time()))
 
 def plot_example_trace(problem=None, candidate=None):
