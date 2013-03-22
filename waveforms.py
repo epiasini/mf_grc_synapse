@@ -64,6 +64,9 @@ def g_subcomp(t, tau_rise, a, tau_dec):
 def a_g_comp(t, tau_rise, a1, tau_dec_1, a2, tau_dec_2, a3, tau_dec_3):
     return g_subcomp(t, tau_rise, a1, tau_dec_1) + g_subcomp(t, tau_rise, a2, tau_dec_2) + g_subcomp(t, tau_rise, a3, tau_dec_3)
 
+def n_g_comp(t, tau_rise, a1, tau_dec_1, a2, tau_dec_2):
+    return g_subcomp(t, tau_rise, a1, tau_dec_1) + g_subcomp(t, tau_rise, a2, tau_dec_2)
+
 def a_g_J_unnorm_comp(t, N, tau_rise, a1, tau_dec_1, a2, tau_dec_2, a3, tau_dec_3):
     return pow(1-exp(-t/tau_rise), N) * (a1*exp(-t/tau_dec_1) + a2*exp(-t/tau_dec_2) + a3*exp(-t/tau_dec_3))
 
@@ -163,10 +166,10 @@ if __name__ == '__main__':
 
         n_block_eric_values = np.array([n_block_eric(v, n_K1slope_J, n_K2slope_J, n_VK1on_J, n_VK1off_J, n_VK2off_J) for v in voltage_points])
 
-        n_g_unblock_params_f = curve_fit(g_subcomp, time_points, n_g_unblock_J_scaled, [n_tau_rise_J, n_g_peak_J, (n_tau_dec_1_J*n_a1_J + n_tau_dec_2_J*n_a2_J)/(n_a1_J + n_a2_J)])[0]
+        n_g_unblock_params_f = curve_fit(n_g_comp, time_points, n_g_unblock_J_scaled, [n_tau_rise_J, n_g_peak_J*n_a1_J, n_tau_dec_1_J, n_g_peak_J*n_a2_J, n_tau_dec_2_J])[0]
         n_block_params_f = curve_fit(n_block, voltage_points, n_block_eric_values, [1, 0.0035])[0]
 
-        n_g_unblock_fitted = partial(g_subcomp, tau_rise=n_g_unblock_params_f[0], a=n_g_unblock_params_f[1], tau_dec=n_g_unblock_params_f[2])
+        n_g_unblock_fitted = partial(n_g_comp, tau_rise=n_g_unblock_params_f[0], a1=n_g_unblock_params_f[1], tau_dec_1=n_g_unblock_params_f[2], a2=n_g_unblock_params_f[3], tau_dec_2=n_g_unblock_params_f[4])
         n_block_fitted = partial(n_block, eta=n_block_params_f[0], gamma=n_block_params_f[1])
 
         n_g_unblock_values = np.array([n_g_unblock_fitted(t) for t in time_points])
@@ -176,12 +179,12 @@ if __name__ == '__main__':
         print(integral_diff)
 
 
-        param_file.write("NMDA (unbblocked) parameters: {params}\n".format(params=zip(['tau_rise', 'a', 'tau_dec'], n_g_unblock_params_f)))
+        param_file.write("NMDA (unbblocked) parameters: {params}\n".format(params=zip(['tau_rise', 'a1', 'tau_dec_1', 'a2', 'tau_dec_2'], n_g_unblock_params_f)))
         param_file.write("NMDA block expression: {params}\n".format(params=zip(['eta', 'gamma'], n_block_params_f)))
 
         n_fig = plt.figure()
         n_ax = n_fig.add_subplot(111)
-        n_ax.plot(time_points, n_g_unblock_J_scaled, label="Jason's")
+        n_ax.plot(time_points, n_g_unblock_J_scaled, label="Rothman 2009")
         n_ax.plot(time_points, n_g_unblock_values, label="NeuroML")
         n_ax.set_title('NMDA waveform (unblocked)')
         n_ax.set_xlabel('time (ms)')
