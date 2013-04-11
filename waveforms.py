@@ -1,7 +1,5 @@
 import numpy as np
 from numpy import exp, log
-from scipy.optimize import curve_fit
-from scipy.integrate import trapz
 from functools import partial
 from matplotlib import pyplot as plt
 
@@ -214,6 +212,8 @@ def rothman2012_AMPA_signal(time_points, pulse_train, single_waveform_length, ti
     return signal/signal.max()
 
 if __name__ == '__main__':
+    from scipy.optimize import curve_fit
+    from scipy.integrate import trapz
     param_file = open('fitted_parameters.txt', 'w')
 
     #====AMPA====
