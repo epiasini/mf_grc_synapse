@@ -23,7 +23,6 @@ class Rothman_AMPA_STP(inspyred.benchmarks.Benchmark):
         self.n_trials = 4
         self.exp_data = []
         self.exp_pulses = []
-        #self.binary_exp_pulses = []
         self.single_waveform_lengths = []
         self.timestep_sizes = []
         for freq in self.frequencies:
@@ -32,9 +31,6 @@ class Rothman_AMPA_STP(inspyred.benchmarks.Benchmark):
                                                                                              freq)))
                 self.exp_data.append(np.loadtxt(AMPA_DIR + "/Avg_AMPA_{0}hz_G{1}.txt".format(freq,
                                                                                              trial)))
-                #self.binary_exp_pulses.append(np.zeros(shape=self.exp_data[-1].shape[0]))
-                #self.binary_exp_pulses[-1][np.searchsorted(self.exp_data[-1][:,0],
-                #                                          self.exp_pulses[-1])] = 1
                 self.single_waveform_lengths.append(np.searchsorted(self.exp_data[-1][:,0],
                                                                     PULSE_CUTOFF))
                 self.timestep_sizes.append(np.diff(self.exp_data[-1][:100,0]).mean())
@@ -107,28 +103,27 @@ def synthetic_conductance_signal(time_points, pulse_train, single_waveform_lengt
     return signal
 
 def fitness_to_experiment(cs):
+    # fitness is defined as the average (across experimental datasets)
+    # of the L2 norm between the synthetic and the experimental signal
+    # divided by the square root of the number of time points, to
+    # avoid unfair weighing in favour of longer recordings (in other
+    # words, this should give equal weight to every time point in
+    # every recording).
     distances = []
     for k, ep in enumerate(problem.exp_pulses):
         timepoints = problem.exp_data[k][:,0]
         signal_direct = synthetic_conductance_signal(timepoints,
                                                      ep,
-                                                     #self.binary_exp_pulses[k],
                                                      problem.single_waveform_lengths[k],
                                                      problem.timestep_sizes[k],
                                                      *cs[:9])
         signal_spillover = synthetic_conductance_signal(timepoints,
                                                         ep,
-                                                        #self.binary_exp_pulses[k],
                                                         problem.single_waveform_lengths[k],
                                                         problem.timestep_sizes[k],
                                                         *cs[9:])
-        # fitness is defined as the L2 norm between the synthetic and
-        # the experimental signal divided by the square root of the
-        # number of time points, to avoid unfair weighing in favour of
-        # longer recordings (in other words, this should give equal
-        # weight to every time point in every recording).
         distances.append(np.linalg.norm(signal_direct+signal_spillover-problem.exp_data[k][:,1])/np.sqrt(timepoints.shape[0]))# + 0.15 * np.abs(normalised_difference_trace.sum()))
-    return sum(distances)
+    return sum(distances)/len(distances)
 
 def generator(random, args):
     return [random.uniform(bounder.lower_bound[k],
@@ -141,8 +136,8 @@ def evaluator(candidates, args):
 def main(plot=False):
     prng = random.Random()
     prng.seed(int(time.time()))
-    max_evaluations = 21000
-    pop_size = 140
+    max_evaluations = 2100
+    pop_size = 70
 
     algorithm = inspyred.swarm.PSO(prng)
     #algorithm = inspyred.ec.EDA(prng)
@@ -175,6 +170,7 @@ def main(plot=False):
 
 def plot_optimisation_results(problem, candidate, fitness, max_evaluations, pop_size):
     fig, ax = plt.subplots(nrows=8, ncols=4, figsize=(160,80), dpi=500)
+    rothman_fitness = 0
     for k, ep in enumerate(problem.exp_pulses):
         timepoints = problem.exp_data[k][:,0]
         signal_direct = synthetic_conductance_signal(timepoints,
@@ -191,13 +187,15 @@ def plot_optimisation_results(problem, candidate, fitness, max_evaluations, pop_
                                                  ep,
                                                  problem.single_waveform_lengths[k],
                                                  problem.timestep_sizes[k])
-        ax.flat[k].plot(timepoints, problem.exp_data[k][:,1], color='b', linewidth=1.5)
-        ax.flat[k].scatter(ep, np.zeros(shape=ep.shape)-0.05, color='r')
-        ax.flat[k].plot(timepoints, rothman_signal, linewidth=1.5, color='k')
-        ax.flat[k].plot(timepoints, signal_direct+signal_spillover, linewidth=2, color='g')
+        rothman_fitness += np.linalg.norm(rothman_signal - problem.exp_data[k][:,1])/np.sqrt(timepoints.shape[0])
+        ax.flat[k].plot(timepoints, problem.exp_data[k][:,1], color='k', linewidth=3)
+        ax.flat[k].scatter(ep, np.zeros(shape=ep.shape)-0.05, color='k')
+        ax.flat[k].plot(timepoints, rothman_signal, linewidth=1, color='r')
+        ax.flat[k].plot(timepoints, signal_direct+signal_spillover, linewidth=1, color='g')
         #ax.flat[k].plot(timepoints, signal_direct, color='r')
         #ax.flat[k].plot(timepoints, signal_spillover, color='c')
-    fig.suptitle('parameters: {0}\n fitness: {1} max_evaluations: {2} pop_size: {3}'.format(candidate, fitness, max_evaluations, pop_size))
+    rothman_fitness /= len(problem.exp_pulses)
+    fig.suptitle('parameters: {0}\n fitness: {1} max_evaluations: {2} pop_size: {3}\nRothman2012 fitness: {4}'.format(candidate, fitness, max_evaluations, pop_size, rothman_fitness))
     plt.savefig('Rothman_AMPA_TM_fit_{0}.png'.format(time.time()))
 
 def plot_example_trace(problem=None, candidate=None):

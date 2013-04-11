@@ -97,6 +97,12 @@ def synthetic_conductance_signal(time_points, pulse_train, single_waveform_lengt
     return signal
 
 def fitness_to_experiment(cs):
+    # fitness is defined as the average (across experimental datasets)
+    # of the L2 norm between the synthetic and the experimental signal
+    # divided by the square root of the number of time points, to
+    # avoid unfair weighing in favour of longer recordings (in other
+    # words, this should give equal weight to every time point in
+    # every recording).
     distances = []
     for k, ep in enumerate(problem.exp_pulses):
         timepoints = problem.exp_data[k][:,0]
@@ -105,13 +111,8 @@ def fitness_to_experiment(cs):
                                               problem.single_waveform_lengths[k],
                                               problem.timestep_sizes[k],
                                               *cs)
-        # fitness is defined as the L2 norm between the synthetic and
-        # the experimental signal divided by the square root of the
-        # number of time points, to avoid unfair weighing in favour of
-        # longer recordings (in other words, this should give equal
-        # weight to every time point in every recording).
         distances.append(np.linalg.norm(signal-problem.exp_data[k][:,1])/np.sqrt(timepoints.shape[0]))# + 0.15 * np.abs(normalised_difference_trace.sum()))
-    return sum(distances)
+    return sum(distances)/len(distances)
 
 def generator(random, args):
     return [random.uniform(bounder.lower_bound[k],
@@ -158,6 +159,7 @@ def main(plot=False):
 
 def plot_optimisation_results(problem, candidate, fitness, max_evaluations, pop_size):
     fig, ax = plt.subplots(nrows=8, ncols=4, figsize=(160,80), dpi=500)
+    rothman_fitness = 0
     for k, ep in enumerate(problem.exp_pulses):
         timepoints = problem.exp_data[k][:,0]
         signal = synthetic_conductance_signal(timepoints,
@@ -169,40 +171,14 @@ def plot_optimisation_results(problem, candidate, fitness, max_evaluations, pop_
                                                  ep,
                                                  problem.single_waveform_lengths[k],
                                                  problem.timestep_sizes[k])
-        ax.flat[k].plot(timepoints, problem.exp_data[k][:,1], color='b', linewidth=1.5)
-        ax.flat[k].scatter(ep, np.zeros(shape=ep.shape)-0.05, color='r')
-        ax.flat[k].plot(timepoints, rothman_signal, linewidth=1.5, color='k')
-        ax.flat[k].plot(timepoints, signal, linewidth=2, color='g')
-    fig.suptitle('parameters: {0}\n fitness: {1} max_evaluations: {2} pop_size: {3}'.format(candidate, fitness, max_evaluations, pop_size))
+        rothman_fitness += np.linalg.norm(rothman_signal - problem.exp_data[k][:,1])/np.sqrt(timepoints.shape[0])
+        ax.flat[k].plot(timepoints, problem.exp_data[k][:,1], color='k', linewidth=3)
+        ax.flat[k].scatter(ep, np.zeros(shape=ep.shape)-0.1, color='k')
+        ax.flat[k].plot(timepoints, rothman_signal, linewidth=1, color='r')
+        ax.flat[k].plot(timepoints, signal, linewidth=1, color='g')
+    rothman_fitness /= len(problem.exp_pulses)
+    fig.suptitle('parameters: {0}\n fitness: {1} max_evaluations: {2} pop_size: {3}\nRothman2012 fitness: {4}'.format(candidate, fitness, max_evaluations, pop_size, rothman_fitness))
     plt.savefig('Rothman_NMDA_TM_fit_{0}.png'.format(time.time()))
-
-def plot_example_trace(problem=None, candidate=None):
-    #a = np.loadtxt(NMDA_DIR + "/NMDA_10hz_G2_181103.txt")
-    a = np.loadtxt(AMPA_DIR + "/Avg_AMPA_10hz_G2.txt")
-    t = np.loadtxt(TIME_DIR + "/gp2_10hz_times.txt")
-
-    fig, ax = plt.subplots()
-    ax.plot(a[:,0], a[:,1])
-    ax.scatter(t, np.zeros(shape=t.shape)-0.05, color='r')
-
-    if problem and candidate:
-        signal_direct = synthetic_conductance_signal(a[:,0],
-                                                     t,
-                                                     problem.single_waveform_lengths[5],
-                                                     problem.timestep_sizes[5],
-                                                     candidate[0],
-                                                     *candidate[1:10])
-        signal_spillover = synthetic_conductance_signal(a[:,0],
-                                                        t,
-                                                        problem.single_waveform_lengths[5],
-                                                        problem.timestep_sizes[5],
-                                                        candidate[0],
-                                                        *candidate[10:])
-        ax.plot(a[:,0], signal_direct+signal_spillover, linewidth=2.5)
-        ax.plot(a[:,0], signal_direct)
-        ax.plot(a[:,0], signal_spillover)
-
-    plt.show()
 
 if __name__ == '__main__':
     main(plot=True)
