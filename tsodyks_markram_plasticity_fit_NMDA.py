@@ -18,9 +18,8 @@ PULSE_CUTOFF = 300
 
 class Rothman_NMDA_STP(inspyred.benchmarks.Benchmark):
     def __init__(self):
-        # parameters: for both direct and spillover components, 1 for
-        # the delay, 7 for the waveform and 2 for the plasticity.
-        inspyred.benchmarks.Benchmark.__init__(self, dimensions=9)
+        # parameters: 5 for the waveform and 3 for the plasticity.
+        inspyred.benchmarks.Benchmark.__init__(self, dimensions=8)
         # load experimental data
         self.frequencies = [5, 10, 20, 30, 50, 80, 100, 150]
         self.n_protocols = 4
@@ -44,8 +43,7 @@ class Rothman_NMDA_STP(inspyred.benchmarks.Benchmark):
 
         self.maximize = False
 
-        self.bounds = [(0.001, 3.), # d_delay **direct (waveform)**
-                       (0.4, 2.), # d_tau_rise
+        self.bounds = [(0.4, 2.), # d_tau_rise **direct (waveform)**
                        (0.4, 4.5), # d_a1
                        (0.07, 1.20), # d_a2
                        (4, 15), # d_tau_dec1
@@ -73,19 +71,23 @@ def plast_table(pulse_train, u_0, tau_rec, tau_fac):
     for n in range(1, r.shape[0]):
         u[n] = u_0 + np.exp(-pulse_intervals[n-1]/tau_fac) * u[n-1] * (1-u_0)
         r[n] = 1 - np.exp(-pulse_intervals[n-1]/tau_rec) * (1 - r[n-1]*(1-u[n-1]))
-    # by the (facilitation-less) tsodyks-markram model, the
-    # plasticity factors are obtained by multiplying r by u_se, to
-    # give the actual fraction of synaptic resource utilised at
-    # any givn pulse, and by another constant representing the
-    # absolute synaptic efficacy (ie the response amplitude when
-    # all the synaptic resource is used). We skip the last step,
-    # as we are already optimising over the shape of the base
-    # synaptic waveform.
+    # by the tsodyks-markram model, the plasticity factors are
+    # obtained by multiplying r by u, to give the actual fraction of
+    # synaptic resource utilised at any given pulse, and by another
+    # constant representing the absolute synaptic efficacy (ie the
+    # response amplitude when all the synaptic resource is used). We
+    # skip the last step, as we are already optimising over the shape
+    # of the base synaptic waveform.
     return r * u
 
-def synthetic_conductance_signal(time_points, pulse_train, single_waveform_length, timestep_size, delay, tau_rise, a1, a2, tau_dec1, tau_dec2, u_se, tau_rec, tau_fac):
-    n_time_points = time_points.shape[0]
+def synthetic_conductance_signal(time_points, pulse_train, single_waveform_length, timestep_size, tau_rise, a1, a2, tau_dec1, tau_dec2, u_se, tau_rec, tau_fac):
+    # the 'delay' compensates the offset that is present between the
+    # experimental pulse times and the times when the responses start
+    # to appear on the experimental recordings. It is present in both
+    # the AMPA and the NMDA case, but with a different value.
+    delay = 1.
     delay_time_points = int(round(delay/timestep_size))
+    n_time_points = time_points.shape[0]
     plast_factors = plast_table(pulse_train, u_se, tau_rec, tau_fac)
     single_pulse_waveform = n_g_comp(time_points[0:single_waveform_length], tau_rise, a1, tau_dec1, a2, tau_dec2)
     signal = np.zeros(shape=n_time_points)
@@ -123,7 +125,7 @@ def evaluator(candidates, args):
 def main(plot=False):
     prng = random.Random()
     prng.seed(int(time.time()))
-    max_evaluations = 8400
+    max_evaluations = 2100
     pop_size = 70
 
     algorithm = inspyred.swarm.PSO(prng)
