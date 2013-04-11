@@ -6,7 +6,7 @@ import scipy.signal
 from matplotlib import pyplot as plt
 
 
-from waveforms import a_g_comp
+from waveforms import a_g_comp, rothman2012_AMPA_signal
 
 DATA_DIR = "/home/ucbtepi/doc/jason_data/JasonsIAFmodel/Jason_Laurence_AMPA_NMDA_Trains"
 NMDA_DIR = DATA_DIR + "/NMDA"
@@ -190,11 +190,16 @@ def plot_optimisation_results(problem, candidate, fitness, max_evaluations, pop_
                                                         problem.timestep_sizes[k],
                                                         candidate[0],
                                                         *candidate[10:])
+        rothman_signal = rothman2012_AMPA_signal(timepoints,
+                                                 ep,
+                                                 problem.single_waveform_lengths[k],
+                                                 problem.timestep_sizes[k])
         ax.flat[k].plot(timepoints, problem.exp_data[k][:,1], color='b', linewidth=1.5)
         ax.flat[k].scatter(ep, np.zeros(shape=ep.shape)-0.05, color='r')
+        ax.flat[k].plot(timepoints, rothman_signal, linewidth=1.5, color='k')
         ax.flat[k].plot(timepoints, signal_direct+signal_spillover, linewidth=2, color='g')
-        ax.flat[k].plot(timepoints, signal_direct, color='r')
-        ax.flat[k].plot(timepoints, signal_spillover, color='c')
+        #ax.flat[k].plot(timepoints, signal_direct, color='r')
+        #ax.flat[k].plot(timepoints, signal_spillover, color='c')
     fig.suptitle('parameters: {0}\n fitness: {1} max_evaluations: {2} pop_size: {3}'.format(candidate, fitness, max_evaluations, pop_size))
     plt.savefig('Rothman_AMPA_TM_fit_{0}.png'.format(time.time()))
 

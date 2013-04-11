@@ -8,14 +8,12 @@ import scipy.signal
 from matplotlib import pyplot as plt
 
 
-from waveforms import a_g_comp, n_g_comp
+from waveforms import n_g_comp, rothman2012_NMDA_signal
 
 DATA_DIR = "/home/ucbtepi/doc/jason_data/JasonsIAFmodel/Jason_Laurence_AMPA_NMDA_Trains"
 NMDA_DIR = DATA_DIR + "/NMDA"
 AMPA_DIR = DATA_DIR + "/AMPA"
 TIME_DIR = DATA_DIR + "/StimTimes"
-#NMDA_CELL_IDS = ["181103", "221103", "270104", "280104"]
-#NMDA_CELL_ID = NMDA_CELL_IDS[3]
 PULSE_CUTOFF = 300
 
 class Rothman_NMDA_STP(inspyred.benchmarks.Benchmark):
@@ -51,10 +49,10 @@ class Rothman_NMDA_STP(inspyred.benchmarks.Benchmark):
                        (0.4, 4.5), # d_a1
                        (0.07, 1.20), # d_a2
                        (4, 15), # d_tau_dec1
-                       (25, 70), # d_tau_dec2
+                       (25, 80), # d_tau_dec2
                        (0.01, 0.5), # d_u_se   **direct (STD)**
-                       (9., 150.), # d_tau_dep
-                       (0.5, 10.)] # d_tau_fac
+                       (9., 200.), # d_tau_dep
+                       (0.5, 12.)] # d_tau_fac
 
 problem = Rothman_NMDA_STP()
 
@@ -86,8 +84,6 @@ def plast_table(pulse_train, u_0, tau_rec, tau_fac):
     return r * u
 
 def synthetic_conductance_signal(time_points, pulse_train, single_waveform_length, timestep_size, delay, tau_rise, a1, a2, tau_dec1, tau_dec2, u_se, tau_rec, tau_fac):
-    # this is meant to be used for a single component (direct or
-    # spillover)
     n_time_points = time_points.shape[0]
     delay_time_points = int(round(delay/timestep_size))
     plast_factors = plast_table(pulse_train, u_se, tau_rec, tau_fac)
@@ -127,8 +123,8 @@ def evaluator(candidates, args):
 def main(plot=False):
     prng = random.Random()
     prng.seed(int(time.time()))
-    max_evaluations = 4200
-    pop_size = 140
+    max_evaluations = 8400
+    pop_size = 70
 
     algorithm = inspyred.swarm.PSO(prng)
     #algorithm = inspyred.ec.EDA(prng)
@@ -168,8 +164,13 @@ def plot_optimisation_results(problem, candidate, fitness, max_evaluations, pop_
                                               problem.single_waveform_lengths[k],
                                               problem.timestep_sizes[k],
                                               *candidate)
+        rothman_signal = rothman2012_NMDA_signal(timepoints,
+                                                 ep,
+                                                 problem.single_waveform_lengths[k],
+                                                 problem.timestep_sizes[k])
         ax.flat[k].plot(timepoints, problem.exp_data[k][:,1], color='b', linewidth=1.5)
         ax.flat[k].scatter(ep, np.zeros(shape=ep.shape)-0.05, color='r')
+        ax.flat[k].plot(timepoints, rothman_signal, linewidth=1.5, color='k')
         ax.flat[k].plot(timepoints, signal, linewidth=2, color='g')
     fig.suptitle('parameters: {0}\n fitness: {1} max_evaluations: {2} pop_size: {3}'.format(candidate, fitness, max_evaluations, pop_size))
     plt.savefig('Rothman_NMDA_TM_fit_{0}.png'.format(time.time()))

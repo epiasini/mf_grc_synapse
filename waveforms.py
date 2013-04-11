@@ -30,7 +30,7 @@ as_tau_dec_2_J = 7.2695
 as_a3_J = .0362763
 as_tau_dec_3_J = 30.856
 
-n_g_peak_J = 0.37
+n_g_peak_J = 0.19
 
 n_N_J = 1.
 n_tau_rise_J = 1.14
@@ -108,6 +108,110 @@ def block_takahashi_1996(v):
 
 def n_block(v, eta, gamma):
     return 1/(1 + eta * exp(-gamma*v))
+
+def rothman2012_plast_table(spikes, D, TauD, Dmin, F, TauF, Fmax):
+    d = 1.
+    f = 1.
+    intvl = 0.
+    DF = np.ones(shape=spikes.shape[0])
+    for i, pt in enumerate(spikes):
+        if i>0:
+            intvl = spikes[i] - spikes[i-1]
+        if i == 0 or D == 1:
+            d = 1.
+        else:
+            d = 1. + (d - 1.) * np.exp(-intvl / TauD)
+            d = max(d, Dmin)
+
+        if i == 0 or F == 1:
+            f = 1.
+        else:
+            f = 1. + (f - 1.) * np.exp(-intvl / TauF)
+            f = min(f, Fmax)
+
+        DF[i] = d * f
+        d *= D
+        f *= F
+    return DF
+
+def rothman2012_NMDA_signal(time_points, pulse_train, single_waveform_length, timestep_size):
+    n_time_points = time_points.shape[0]
+    # there seems to be an offset between the experimental pulse times
+    # and the response recordings
+    offset = 1.0 # (ms)
+    offset_time_points = int(round(offset/timestep_size))
+
+    # plasticity parameters
+    D = 0.9
+    TauD = 70.
+    Dmin = 0.1
+    F = 1.7
+    TauF = 3.5
+    Fmax = 3.4
+    plast_factors = rothman2012_plast_table(pulse_train, D, TauD, Dmin, F, TauF, Fmax)
+    # waveform shape
+    n_g_unblock_J_values = n_g_unblock_J_unnorm(time_points[0:single_waveform_length], n_N_J, n_tau_rise_J, n_a1_J, n_tau_dec_1_J, n_a2_J, n_tau_dec_2_J)
+    max_n_g_unblock_J_values = n_g_unblock_J_values.max()
+    n_g_unblock_J_norm_values = n_g_unblock_J_values/max_n_g_unblock_J_values
+    single_pulse_waveform = n_g_unblock_J_norm_values
+    # construct signal
+    signal = np.zeros(shape = n_time_points)
+    for n, pulse in enumerate(pulse_train):
+        start = np.searchsorted(time_points, pulse) + offset_time_points
+        end = start + single_waveform_length
+        signal[start:end] += (single_pulse_waveform * plast_factors[n])[:single_pulse_waveform.shape[0]-(end - n_time_points)]
+    return n_g_peak_J * signal
+
+def rothman2012_AMPA_signal(time_points, pulse_train, single_waveform_length, timestep_size):
+    n_time_points = time_points.shape[0]
+    # there seems to be an offset between the experimental pulse times
+    # and the response recordings
+    offset = 0.5
+    offset_time_points = int(round(offset/timestep_size))
+
+    # -- DIRECT --
+    # plasticity
+    D = 0.6
+    TauD = 50
+    Dmin = 0.1
+    F = 1
+    TauF = None
+    Fmax = None
+    plast_factors = rothman2012_plast_table(pulse_train, D, TauD, Dmin, F, TauF, Fmax)
+    # waveform shape
+    ad_g_J_values = a_g_J_unnorm_comp(time_points[0:single_waveform_length], ad_N_J, ad_tau_rise_J, ad_a1_J, ad_tau_dec_1_J, ad_a2_J, ad_tau_dec_2_J, ad_a3_J, ad_tau_dec_3_J)
+    ad_g_J_norm_values = ad_g_J_values/ad_g_J_values.max()
+    single_pulse_waveform = ad_g_J_norm_values
+    # construct signal
+    signal_direct = np.zeros(shape = n_time_points)
+    for n, pulse in enumerate(pulse_train):
+        start = np.searchsorted(time_points, pulse) + offset_time_points
+        end = start + single_waveform_length
+        signal_direct[start:end] += (single_pulse_waveform * plast_factors[n])[:single_pulse_waveform.shape[0]-(end - n_time_points)]
+
+    # -- SPILLOVER --
+    # spillover component plasticity
+    D = 0.95
+    TauD = 50
+    Dmin = 0.6
+    F = 1
+    TauF = None
+    Fmax = None
+    plast_factors = rothman2012_plast_table(pulse_train, D, TauD, Dmin, F, TauF, Fmax)
+    # waveform shape
+    as_g_J_values = a_g_J_unnorm_comp(time_points[0:single_waveform_length], as_N_J, as_tau_rise_J, as_a1_J, as_tau_dec_1_J, as_a2_J, as_tau_dec_2_J, as_a3_J, as_tau_dec_3_J)
+    as_g_J_norm_values = as_g_J_values/as_g_J_values.max()
+    single_pulse_waveform = as_g_J_norm_values
+    # construct signal
+    signal_spillover = np.zeros(shape = n_time_points)
+    for n, pulse in enumerate(pulse_train):
+        start = np.searchsorted(time_points, pulse) + offset_time_points
+        end = start + single_waveform_length
+        signal_spillover[start:end] += (single_pulse_waveform * plast_factors[n])[:single_pulse_waveform.shape[0]-(end - n_time_points)]
+
+    # sum direct and spillover components and normalise again
+    signal = signal_direct + a_sd_ratio_J*signal_spillover
+    return signal/signal.max()
 
 if __name__ == '__main__':
     param_file = open('fitted_parameters.txt', 'w')
