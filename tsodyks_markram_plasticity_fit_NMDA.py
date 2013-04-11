@@ -4,7 +4,6 @@ import glob
 import inspyred
 import h5py
 import numpy as np
-import scipy.signal
 from matplotlib import pyplot as plt
 
 

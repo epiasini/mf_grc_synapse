@@ -2,7 +2,6 @@ import random
 import time
 import inspyred
 import numpy as np
-import scipy.signal
 from matplotlib import pyplot as plt
 
 
