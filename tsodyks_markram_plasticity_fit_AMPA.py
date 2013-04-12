@@ -1,9 +1,9 @@
 import random
 import time
+import h5py
 import inspyred
 import numpy as np
 from matplotlib import pyplot as plt
-
 
 from waveforms import a_g_comp, rothman2012_AMPA_signal
 
@@ -20,23 +20,20 @@ class Rothman_AMPA_STP(inspyred.benchmarks.Benchmark):
         inspyred.benchmarks.Benchmark.__init__(self, dimensions=18)
         # load experimental data
         self.frequencies = [5, 10, 20, 30, 50, 80, 100, 150]
-        self.n_trials = 4
+        self.n_protocols = 4
         self.exp_data = []
         self.exp_pulses = []
         self.single_waveform_lengths = []
         self.timestep_sizes = []
-        for freq in self.frequencies:
-            for trial in range(self.n_trials):
-                self.exp_pulses.append(np.loadtxt(TIME_DIR + "/gp{0}_{1}hz_times.txt".format(trial,
-                                                                                             freq)))
-                self.exp_data.append(np.loadtxt(AMPA_DIR + "/Avg_AMPA_{0}hz_G{1}.txt".format(freq,
-                                                                                             trial)))
-                self.single_waveform_lengths.append(np.searchsorted(self.exp_data[-1][:,0],
-                                                                    PULSE_CUTOFF))
-                self.timestep_sizes.append(np.diff(self.exp_data[-1][:100,0]).mean())
-        # needed to generate random values for tau_rec in the _open_
-        # interval (0,2)
-        self.epsilon = 1e-15
+        with h5py.File("AMPA_experimental_data.hdf5") as data_repo:
+            for freq in self.frequencies:
+                for prot in range(self.n_protocols):
+                    data_group = data_repo['/{0}/{1}'.format(freq, prot)]
+                    self.exp_pulses.append(np.array(data_group['pulse_times']))
+                    self.exp_data.append(np.array(data_group['average_waveform']))
+                    self.single_waveform_lengths.append(np.searchsorted(self.exp_data[-1][:,0],
+                                                                        PULSE_CUTOFF))
+                    self.timestep_sizes.append(np.diff(self.exp_data[-1][:100,0]).mean())
 
         self.maximize = False
 
@@ -52,10 +49,10 @@ class Rothman_AMPA_STP(inspyred.benchmarks.Benchmark):
                        (0.1, 1.2), # s_tau_rise **spillover (waveform)**
                        (0.005, 0.21), # s_a1
                        (0.005, 0.42), # s_a2
-                       (0.005, 0.104), # s_a3
+                       (0.005, 0.153), # s_a3
                        (0.5, 1.53), # s_tau_dec1
                        (7.0, 8.0), # s_tau_dec2
-                       (28.1, 50.), #s_tau_dec3
+                       (28.1, 60.), #s_tau_dec3
                        (0.001, .8), # s_u_se   **spillover (STD)**
                        (2., 80.)] # s_tau_dep
 
@@ -83,14 +80,13 @@ def dep_table(pulse_train, u_se, tau_rec):
     # synaptic waveform.
     return r * u_se
 
-def synthetic_conductance_signal(time_points, pulse_train, single_waveform_length, timestep_size, tau_rise, a1, a2, a3, tau_dec1, tau_dec2, tau_dec3, u_se, tau_rec):
+def synthetic_conductance_signal(time_points, pulse_train, single_waveform_length, timestep_size, delay, tau_rise, a1, a2, a3, tau_dec1, tau_dec2, tau_dec3, u_se, tau_rec):
     # this is meant to be used for a single component (direct or
     # spillover). The 'delay' compensates the offset that is present
     # between the experimental pulse times and the times when the
     # responses start to appear on the experimental recordings. It is
     # present in both the AMPA and the NMDA case, but with a different
     # value.
-    delay = 0.5
     delay_time_points = int(round(delay/timestep_size))
     n_time_points = time_points.shape[0]
     dep_factors = dep_table(pulse_train, u_se, tau_rec)
@@ -116,11 +112,13 @@ def fitness_to_experiment(cs):
                                                      ep,
                                                      problem.single_waveform_lengths[k],
                                                      problem.timestep_sizes[k],
+                                                     0.5,
                                                      *cs[:9])
         signal_spillover = synthetic_conductance_signal(timepoints,
                                                         ep,
                                                         problem.single_waveform_lengths[k],
                                                         problem.timestep_sizes[k],
+                                                        0.5,
                                                         *cs[9:])
         distances.append(np.linalg.norm(signal_direct+signal_spillover-problem.exp_data[k][:,1])/np.sqrt(timepoints.shape[0]))# + 0.15 * np.abs(normalised_difference_trace.sum()))
     return sum(distances)/len(distances)
@@ -136,8 +134,8 @@ def evaluator(candidates, args):
 def main(plot=False):
     prng = random.Random()
     prng.seed(int(time.time()))
-    max_evaluations = 2100
-    pop_size = 70
+    max_evaluations = 126000
+    pop_size = 140
 
     algorithm = inspyred.swarm.PSO(prng)
     #algorithm = inspyred.ec.EDA(prng)
@@ -171,26 +169,40 @@ def main(plot=False):
 def plot_optimisation_results(problem, candidate, fitness, max_evaluations, pop_size):
     fig, ax = plt.subplots(nrows=8, ncols=4, figsize=(160,80), dpi=500)
     rothman_fitness = 0
+
+    java_fit_time_points = []
+    java_fit_signals = []
+    with h5py.File("AMPA_jason_fit_traces.hdf5") as java_fit_data_repo:
+        for freq in problem.frequencies:
+            for prot in range(problem.n_protocols):
+                data_group = java_fit_data_repo['/{0}/{1}'.format(freq, prot)]
+                java_fit_time_points.append(np.array(data_group['average_waveform'][:-1,0]))
+                java_fit_signals.append(np.array(data_group['average_waveform'][:-1,1]))
+
     for k, ep in enumerate(problem.exp_pulses):
         timepoints = problem.exp_data[k][:,0]
         signal_direct = synthetic_conductance_signal(timepoints,
                                                      ep,
                                                      problem.single_waveform_lengths[k],
                                                      problem.timestep_sizes[k],
+                                                     0.5,
                                                      *candidate[0:9])
         signal_spillover = synthetic_conductance_signal(timepoints,
                                                         ep,
                                                         problem.single_waveform_lengths[k],
                                                         problem.timestep_sizes[k],
+                                                        0.5,
                                                         *candidate[9:])
-        rothman_signal = rothman2012_AMPA_signal(timepoints,
-                                                 ep,
-                                                 problem.single_waveform_lengths[k],
-                                                 problem.timestep_sizes[k])
+        # rothman_signal = rothman2012_AMPA_signal(timepoints,
+        #                                          ep,
+        #                                          problem.single_waveform_lengths[k],
+        #                                          problem.timestep_sizes[k])
+        rothman_signal = java_fit_signals[k]
         rothman_fitness += np.linalg.norm(rothman_signal - problem.exp_data[k][:,1])/np.sqrt(timepoints.shape[0])
         ax.flat[k].plot(timepoints, problem.exp_data[k][:,1], color='k', linewidth=3)
         ax.flat[k].scatter(ep, np.zeros(shape=ep.shape)-0.05, color='k')
         ax.flat[k].plot(timepoints, rothman_signal, linewidth=1, color='r')
+        #ax.flat[k].plot(java_fit_time_points[k], java_fit_signals[k], color='c')
         ax.flat[k].plot(timepoints, signal_direct+signal_spillover, linewidth=1, color='g')
         #ax.flat[k].plot(timepoints, signal_direct, color='r')
         #ax.flat[k].plot(timepoints, signal_spillover, color='c')

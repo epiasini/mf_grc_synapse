@@ -28,17 +28,14 @@ class Rothman_NMDA_STP(inspyred.benchmarks.Benchmark):
         self.single_waveform_lengths = []
         self.timestep_sizes = []
         with h5py.File("NMDA_experimental_data.hdf5") as data_repo:
-                for freq in self.frequencies:
-                    for prot in range(self.n_protocols):
-                        data_group = data_repo['/{0}/{1}'.format(freq, prot)]
-                        self.exp_pulses.append(np.array(data_group['pulse_times']))
-                        self.exp_data.append(np.array(data_group['average_waveform']))
-                        self.single_waveform_lengths.append(np.searchsorted(self.exp_data[-1][:,0],
-                                                            PULSE_CUTOFF))
-                        self.timestep_sizes.append(np.diff(self.exp_data[-1][:100,0]).mean())
-        # needed to generate random values for tau_rec in the _open_
-        # interval (0,2)
-        self.epsilon = 1e-15
+            for freq in self.frequencies:
+                for prot in range(self.n_protocols):
+                    data_group = data_repo['/{0}/{1}'.format(freq, prot)]
+                    self.exp_pulses.append(np.array(data_group['pulse_times']))
+                    self.exp_data.append(np.array(data_group['average_waveform']))
+                    self.single_waveform_lengths.append(np.searchsorted(self.exp_data[-1][:,0],
+                                                                        PULSE_CUTOFF))
+                    self.timestep_sizes.append(np.diff(self.exp_data[-1][:100,0]).mean())
 
         self.maximize = False
 
@@ -79,12 +76,11 @@ def plast_table(pulse_train, u_0, tau_rec, tau_fac):
     # of the base synaptic waveform.
     return r * u
 
-def synthetic_conductance_signal(time_points, pulse_train, single_waveform_length, timestep_size, tau_rise, a1, a2, tau_dec1, tau_dec2, u_se, tau_rec, tau_fac):
+def synthetic_conductance_signal(time_points, pulse_train, single_waveform_length, timestep_size, delay, tau_rise, a1, a2, tau_dec1, tau_dec2, u_se, tau_rec, tau_fac):
     # the 'delay' compensates the offset that is present between the
     # experimental pulse times and the times when the responses start
     # to appear on the experimental recordings. It is present in both
     # the AMPA and the NMDA case, but with a different value.
-    delay = 1.
     delay_time_points = int(round(delay/timestep_size))
     n_time_points = time_points.shape[0]
     plast_factors = plast_table(pulse_train, u_se, tau_rec, tau_fac)
@@ -110,6 +106,7 @@ def fitness_to_experiment(cs):
                                               ep,
                                               problem.single_waveform_lengths[k],
                                               problem.timestep_sizes[k],
+                                              1.,
                                               *cs)
         distances.append(np.linalg.norm(signal-problem.exp_data[k][:,1])/np.sqrt(timepoints.shape[0]))# + 0.15 * np.abs(normalised_difference_trace.sum()))
     return sum(distances)/len(distances)
@@ -125,7 +122,7 @@ def evaluator(candidates, args):
 def main(plot=False):
     prng = random.Random()
     prng.seed(int(time.time()))
-    max_evaluations = 2100
+    max_evaluations = 1120
     pop_size = 70
 
     algorithm = inspyred.swarm.PSO(prng)
@@ -166,6 +163,7 @@ def plot_optimisation_results(problem, candidate, fitness, max_evaluations, pop_
                                               ep,
                                               problem.single_waveform_lengths[k],
                                               problem.timestep_sizes[k],
+                                              1.,
                                               *candidate)
         rothman_signal = rothman2012_NMDA_signal(timepoints,
                                                  ep,

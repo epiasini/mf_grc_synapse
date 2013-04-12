@@ -28,7 +28,11 @@ as_tau_dec_2_J = 7.2695
 as_a3_J = .0362763
 as_tau_dec_3_J = 30.856
 
-n_g_peak_J = 0.19
+n_g_peak_J = 0.18 # this takes into account Mg2+ block at the voltage
+                  # used for the conductance recordings (carried out
+                  # in voltage clamp). Actual value to be used in the
+                  # model should be 0.37 (Rothman2009, methods
+                  # section)
 
 n_N_J = 1.
 n_tau_rise_J = 1.14
