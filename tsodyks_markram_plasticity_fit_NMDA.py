@@ -143,9 +143,8 @@ def main(plot=False):
                                  num_elites=1)
     # Sort and print the best individual
     final_pop.sort(reverse=True)
-    selected_candidate = final_pop[0].candidate[:19]
-    print("direct:    {0}".format(selected_candidate[:10]))
-    print("spillover: {0}".format(selected_candidate[10:]))
+    selected_candidate = final_pop[0].candidate[:8]
+    print("direct:    {0}".format(selected_candidate[:8]))
     print("fitness:   {0}".format(final_pop[0].fitness))
     if plot:
         plot_optimisation_results(problem,
@@ -157,6 +156,21 @@ def main(plot=False):
 def plot_optimisation_results(problem, candidate, fitness, max_evaluations, pop_size):
     fig, ax = plt.subplots(nrows=8, ncols=4, figsize=(160,80), dpi=500)
     rothman_fitness = 0
+
+    java_fit_time_points = []
+    java_fit_signals = []
+    with h5py.File("NMDA_jason_fit_traces.hdf5") as java_fit_data_repo:
+        for freq in problem.frequencies:
+            for prot in range(problem.n_protocols):
+                data_group = java_fit_data_repo['/{0}/{1}'.format(freq, prot)]
+                # jason's modeled traces have their first peak
+                # normalised to 1 and they don't have any offset, so
+                # we must add 1ms to the time dimension and scale by
+                # the value used for the maximum NMDA peak conductance
+                # (0.18nS)
+                java_fit_time_points.append(np.array(data_group['average_waveform'][:-1,0]) + 1.)
+                java_fit_signals.append(np.array(data_group['average_waveform'][:-1,1]) * 0.18)
+
     for k, ep in enumerate(problem.exp_pulses):
         timepoints = problem.exp_data[k][:,0]
         signal = synthetic_conductance_signal(timepoints,
@@ -165,14 +179,20 @@ def plot_optimisation_results(problem, candidate, fitness, max_evaluations, pop_
                                               problem.timestep_sizes[k],
                                               1.,
                                               *candidate)
-        rothman_signal = rothman2012_NMDA_signal(timepoints,
-                                                 ep,
-                                                 problem.single_waveform_lengths[k],
-                                                 problem.timestep_sizes[k])
-        rothman_fitness += np.linalg.norm(rothman_signal - problem.exp_data[k][:,1])/np.sqrt(timepoints.shape[0])
+        # we use the trace we compute in Python to calculate the
+        # fitness of Jason's model, whereas the plotted trace is taken
+        # straight from the synthetic data he generated in Java. The
+        # two coincide anyway, and this is just to avoid headaches
+        # with time axis misalignments.
+        rothman_signal_python = rothman2012_NMDA_signal(timepoints,
+                                                        ep,
+                                                        problem.single_waveform_lengths[k],
+                                                        problem.timestep_sizes[k])
+        rothman_signal_java = java_fit_signals[k]
+        rothman_fitness += np.linalg.norm(rothman_signal_python - problem.exp_data[k][:,1])/np.sqrt(timepoints.shape[0])
         ax.flat[k].plot(timepoints, problem.exp_data[k][:,1], color='k', linewidth=3)
         ax.flat[k].scatter(ep, np.zeros(shape=ep.shape)-0.1, color='k')
-        ax.flat[k].plot(timepoints, rothman_signal, linewidth=1, color='r')
+        ax.flat[k].plot(java_fit_time_points[k], rothman_signal_java, linewidth=1, color='r')
         ax.flat[k].plot(timepoints, signal, linewidth=1, color='g')
     rothman_fitness /= len(problem.exp_pulses)
     fig.suptitle('parameters: {0}\n fitness: {1} max_evaluations: {2} pop_size: {3}\nRothman2012 fitness: {4}'.format(candidate, fitness, max_evaluations, pop_size, rothman_fitness))
