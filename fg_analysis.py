@@ -8,6 +8,8 @@ from tsodyks_markram_plasticity_fit_AMPA import PULSE_CUTOFF as PULSE_CUTOFF_AMP
 from tsodyks_markram_plasticity_fit_NMDA import synthetic_conductance_signal as signal_generator_NMDA
 from tsodyks_markram_plasticity_fit_NMDA import PULSE_CUTOFF as PULSE_CUTOFF_NMDA
 
+from waveforms import n_g_peak_J
+
 # jason's experimental data
 jason_exp_frequencies = np.array([6.0, 9.5, 19.5, 29.5, 42.8, 70.0, 85.6, 138.0])
 jason_exp_gAMPA_mean = np.array([0.017, 0.022, 0.055, 0.071, 0.110, 0.178, 0.190, 0.241])
@@ -58,7 +60,7 @@ for k, freq in enumerate(frequencies):
                                         0.,
                                         *candidate_NMDA)
     average_conductances_AMPA[k] = (signal_AMPA_direct+signal_AMPA_spillover).sum()*dt/sim_length
-    average_conductances_NMDA[k] = (5)*(signal_NMDA.sum()*dt/sim_length)
+    average_conductances_NMDA[k] = (1./n_g_peak_J)*signal_NMDA.sum()*dt/sim_length
 
 
 fig_AMPA, ax_AMPA = plt.subplots()
