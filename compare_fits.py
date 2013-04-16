@@ -3,8 +3,8 @@ from tsodyks_markram_plasticity_fit_NMDA import plot_optimisation_results as plo
 from tsodyks_markram_plasticity_fit_AMPA import Rothman_AMPA_STP
 from tsodyks_markram_plasticity_fit_AMPA import plot_optimisation_results as plot_AMPA
 
-AMPA = True
-NMDA = False
+AMPA = False
+NMDA = True
 
 if __name__ == '__main__':
     if AMPA:
@@ -23,10 +23,10 @@ if __name__ == '__main__':
     if NMDA:
         # -- NMDA --
         problem_NMDA = Rothman_NMDA_STP()
-        candidate_NMDA = [0.9501, 2.870, 0.8586, 10.31, 78.38, 0.03734, 178.34, 7.124]
+        candidate_NMDA = [0.8647, 3.683, 0.5730, 13.52, 121.9, 0.03220, 236.1, 6.394]
         fitness_NMDA = 0.035
-        max_evaluations_NMDA = 18000
-        pop_size_NMDA = 90
+        max_evaluations_NMDA = 22800
+        pop_size_NMDA = 140
 
         plot_NMDA(problem_NMDA,
                   candidate_NMDA,

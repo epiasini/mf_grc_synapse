@@ -22,7 +22,8 @@ jason_fit_gAMPA = np.array([0.0255, 0.0492, 0.0734, 0.0912, 0.1118, 0.1289, 0.14
 jason_fit_gNMDA = np.array([0.1678, 0.3272, 0.4976, 0.6215, 0.7695, 0.8851, 1.0344, 1.1419, 1.2830, 1.3759, 1.4940, 1.5669, 1.7775, 1.9963, 2.2018, 2.3852])
 
 frequencies = np.arange(7.5, 151., 7.5)
-sim_length = 100000.
+sim_length = 1000.
+n_trials = 100
 dt = 0.01
 time_points = np.arange(0, sim_length, dt)
 single_waveform_length_AMPA = np.searchsorted(time_points,
@@ -31,37 +32,41 @@ single_waveform_length_NMDA = np.searchsorted(time_points,
                                               PULSE_CUTOFF_NMDA)
 
 candidate_AMPA = [0.3275, 4.5, 0.5011, 0.0001329, 0.3493, 2.45, 23.0, 0.1260, 141.1, 0.2189, 0.1700, 0.3089, 0.123, 1.53, 7.0, 49.97, 0.2849, 12.66]
-candidate_NMDA = [0.9501, 2.870, 0.8586, 10.31, 78.38, 0.03734, 178.34, 7.124]
+candidate_NMDA = [0.8647, 3.683, 0.5730, 13.52, 121.9, 0.03220, 236.1, 6.394]
 st_gen = stgen.StGen()
 
 average_conductances_AMPA = np.zeros(shape=frequencies.shape[0])
 average_conductances_NMDA = np.zeros(shape=frequencies.shape[0])
 for k, freq in enumerate(frequencies):
-    pulse_train = st_gen.poisson_generator(rate=freq,
-                                           t_start=0.,
-                                           t_stop=sim_length,
-                                           array=True)
-    signal_AMPA_direct = signal_generator_AMPA(time_points,
-                                               pulse_train,
-                                               single_waveform_length_AMPA,
-                                               dt,
-                                               0.,
-                                               *candidate_AMPA[0:9])
-    signal_AMPA_spillover = signal_generator_AMPA(time_points,
-                                                  pulse_train,
-                                                  single_waveform_length_AMPA,
-                                                  dt,
-                                                  0.,
-                                                  *candidate_AMPA[9:])
-    signal_NMDA = signal_generator_NMDA(time_points,
-                                        pulse_train,
-                                        single_waveform_length_NMDA,
-                                        dt,
-                                        0.,
-                                        *candidate_NMDA)
-    average_conductances_AMPA[k] = (signal_AMPA_direct+signal_AMPA_spillover).sum()*dt/sim_length
-    average_conductances_NMDA[k] = (1./n_g_peak_J)*signal_NMDA.sum()*dt/sim_length
-
+    cond_AMPA = np.zeros(shape=n_trials)
+    cond_NMDA = np.zeros(shape=n_trials)
+    for trial in range(n_trials):
+        pulse_train = st_gen.poisson_generator(rate=freq,
+                                               t_start=0.,
+                                               t_stop=sim_length,
+                                               array=True)
+        signal_AMPA_direct = signal_generator_AMPA(time_points,
+                                                   pulse_train,
+                                                   single_waveform_length_AMPA,
+                                                   dt,
+                                                   0.,
+                                                   *candidate_AMPA[0:9])
+        signal_AMPA_spillover = signal_generator_AMPA(time_points,
+                                                      pulse_train,
+                                                      single_waveform_length_AMPA,
+                                                      dt,
+                                                      0.,
+                                                      *candidate_AMPA[9:])
+        signal_NMDA = signal_generator_NMDA(time_points,
+                                            pulse_train,
+                                            single_waveform_length_NMDA,
+                                            dt,
+                                            0.,
+                                            *candidate_NMDA)
+        cond_AMPA[trial] = (signal_AMPA_direct+signal_AMPA_spillover).sum()*dt/sim_length
+        cond_NMDA[trial] = (1./n_g_peak_J)*signal_NMDA.sum()*dt/sim_length
+    average_conductances_AMPA[k] = cond_AMPA.mean()
+    average_conductances_NMDA[k] = cond_NMDA.mean()
 
 fig_AMPA, ax_AMPA = plt.subplots()
 ax_AMPA.errorbar(jason_exp_frequencies,

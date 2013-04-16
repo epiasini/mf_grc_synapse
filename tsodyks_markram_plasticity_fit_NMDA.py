@@ -13,7 +13,7 @@ DATA_DIR = "/home/ucbtepi/doc/jason_data/JasonsIAFmodel/Jason_Laurence_AMPA_NMDA
 NMDA_DIR = DATA_DIR + "/NMDA"
 AMPA_DIR = DATA_DIR + "/AMPA"
 TIME_DIR = DATA_DIR + "/StimTimes"
-PULSE_CUTOFF = 300
+PULSE_CUTOFF = 500
 
 class Rothman_NMDA_STP(inspyred.benchmarks.Benchmark):
     def __init__(self):
@@ -43,9 +43,9 @@ class Rothman_NMDA_STP(inspyred.benchmarks.Benchmark):
                        (0.4, 4.5), # d_a1
                        (0.07, 1.20), # d_a2
                        (4, 15), # d_tau_dec1
-                       (25, 80), # d_tau_dec2
+                       (25, 150), # d_tau_dec2
                        (0.01, 0.5), # d_u_se   **direct (STD)**
-                       (9., 200.), # d_tau_dep
+                       (9., 300.), # d_tau_dep
                        (0.5, 12.)] # d_tau_fac
 
 problem = Rothman_NMDA_STP()
@@ -81,15 +81,27 @@ def synthetic_conductance_signal(time_points, pulse_train, single_waveform_lengt
     # experimental pulse times and the times when the responses start
     # to appear on the experimental recordings. It is present in both
     # the AMPA and the NMDA case, but with a different value.
-    delay_time_points = int(round(delay/timestep_size))
+
     n_time_points = time_points.shape[0]
-    plast_factors = plast_table(pulse_train, u_se, tau_rec, tau_fac)
-    single_pulse_waveform = n_g_comp(time_points[0:single_waveform_length], tau_rise, a1, tau_dec1, a2, tau_dec2)
     signal = np.zeros(shape=n_time_points)
-    for n, pulse in enumerate(pulse_train):
-        start = np.searchsorted(time_points, pulse) + delay_time_points
-        end = start + single_waveform_length
-        signal[start:end] += (single_pulse_waveform * plast_factors[n])[:single_pulse_waveform.shape[0]-(end - n_time_points)]
+    # compute a table of all the plasticity-scaled waveforms that we
+    # will need to add to form the total conductance train.
+    plast_factors = plast_table(pulse_train, u_se, tau_rec, tau_fac)
+    single_pulse_waveform = n_g_comp(time_points[0:single_waveform_length],
+                                     tau_rise,
+                                     a1,
+                                     tau_dec1,
+                                     a2,
+                                     tau_dec2)
+    pulse_waveforms = np.outer(plast_factors, single_pulse_waveform)
+    # find the indexes of the 'signal' array that correspond to the
+    # pulse times, as they are where we need to start summing each of
+    # the scaled waveforms we have precomputed.
+    start_points = np.floor((pulse_train + delay - time_points[0])/timestep_size)
+    end_points = start_points + single_waveform_length
+    # sum all waveforms with the appropriate offsets
+    for n, waveform in enumerate(pulse_waveforms):
+        signal[start_points[n]:end_points[n]] += waveform[:single_waveform_length-(end_points[n] - n_time_points)]
     return signal
 
 def fitness_to_experiment(cs):
@@ -122,8 +134,8 @@ def evaluator(candidates, args):
 def main(plot=False):
     prng = random.Random()
     prng.seed(int(time.time()))
-    max_evaluations = 1120
-    pop_size = 70
+    max_evaluations = 22800
+    pop_size = 140
 
     algorithm = inspyred.swarm.PSO(prng)
     #algorithm = inspyred.ec.EDA(prng)

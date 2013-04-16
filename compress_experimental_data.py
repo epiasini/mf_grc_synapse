@@ -15,8 +15,8 @@ frequencies = [5, 10, 20, 30, 50, 80, 100, 150]
 n_protocols = 4
 
 
-for syn_type in []:#["AMPA", "NMDA"]:
-    with h5py.File("{0}_experimental_data_prova.hdf5".format(syn_type)) as data_repo:
+for syn_type in ["NMDA"]:#["AMPA", "NMDA"]:
+    with h5py.File("{0}_experimental_data.hdf5".format(syn_type)) as data_repo:
         for freq in frequencies:
             f_group = data_repo.create_group(str(freq))
             for prot in range(n_protocols):
@@ -27,14 +27,12 @@ for syn_type in []:#["AMPA", "NMDA"]:
                 waveform_filenames = glob.glob(DATA_DIR + "/" + syn_type + "/*{0}_{1}hz_G{2}*.txt".format(syn_type, freq, prot))
                 waveforms = np.array([np.loadtxt(f) for f in waveform_filenames])
                 # truncate them so that their time axes coincide
-                #max_start_time = waveforms[:,0,0].max()
-                #min_end_time = waveforms[:,-1,0].min()
-                #print max_start_time, min_end_time
-                #truncated_waveforms = np.array([wf[np.searchsorted(wf[:,0], max_start_time):np.searchsorted(wf[:,0], min_end_time)] for wf in waveforms])
-                #print truncated_waves
+                max_start_time = waveforms[:,0,0].max()
+                min_end_time = waveforms[:,-1,0].min()
+                truncated_waveforms = np.array([wf[np.searchsorted(wf[:,0], max_start_time):np.searchsorted(wf[:,0], min_end_time, side="right")] for wf in waveforms])
                 # write hdf5 datasets
                 p_group.create_dataset('pulse_times', data=pulse_times)
-                p_group.create_dataset('average_waveform', data=np.mean(waveforms, axis=0))
+                p_group.create_dataset('average_waveform', data=np.mean(truncated_waveforms, axis=0))
 
 with h5py.File("AMPA_jason_fit_traces.hdf5") as data_repo:
     for freq in []:#frequencies:
@@ -48,7 +46,7 @@ with h5py.File("AMPA_jason_fit_traces.hdf5") as data_repo:
             p_group.create_dataset('average_waveform', data=waveform)
 
 with h5py.File("NMDA_jason_fit_traces.hdf5") as data_repo:
-    for freq in frequencies:
+    for freq in []:#frequencies:
         f_group = data_repo.create_group(str(freq))
         for prot in range(n_protocols):
             p_group = f_group.create_group(str(prot))
