@@ -3,7 +3,8 @@ from NeuroTools import stgen
 import numpy as np
 from matplotlib import pyplot as plt
 
-from tsodyks_markram_plasticity_fit_AMPA import synthetic_conductance_signal as signal_generator_AMPA
+from tsodyks_markram_plasticity_fit_AMPA import synthetic_conductance_signal_direct as signal_generator_AMPA_direct
+from tsodyks_markram_plasticity_fit_AMPA import synthetic_conductance_signal_spillover as signal_generator_AMPA_spillover
 from tsodyks_markram_plasticity_fit_AMPA import PULSE_CUTOFF as PULSE_CUTOFF_AMPA
 from tsodyks_markram_plasticity_fit_NMDA import synthetic_conductance_signal as signal_generator_NMDA
 from tsodyks_markram_plasticity_fit_NMDA import PULSE_CUTOFF as PULSE_CUTOFF_NMDA
@@ -31,7 +32,7 @@ single_waveform_length_AMPA = np.searchsorted(time_points,
 single_waveform_length_NMDA = np.searchsorted(time_points,
                                               PULSE_CUTOFF_NMDA)
 
-candidate_AMPA = [0.3275, 4.5, 0.5011, 0.0001329, 0.3493, 2.45, 23.0, 0.1260, 141.1, 0.2189, 0.1700, 0.3089, 0.123, 1.53, 7.0, 49.97, 0.2849, 12.66]
+candidate_AMPA = [0.3274, 4.492, 0.3659, 0.3351, 1.651, 0.1249, 131.0, 0.5548, 0.3000, 0.3376, 0.153, 0.4, 4.899, 43.10, 0.2792, 14.85]
 candidate_NMDA = [0.8647, 3.683, 0.5730, 13.52, 121.9, 0.03220, 236.1, 6.394]
 st_gen = stgen.StGen()
 
@@ -45,18 +46,18 @@ for k, freq in enumerate(frequencies):
                                                t_start=0.,
                                                t_stop=sim_length,
                                                array=True)
-        signal_AMPA_direct = signal_generator_AMPA(time_points,
+        signal_AMPA_direct = signal_generator_AMPA_direct(time_points,
                                                    pulse_train,
                                                    single_waveform_length_AMPA,
                                                    dt,
                                                    0.,
-                                                   *candidate_AMPA[0:9])
-        signal_AMPA_spillover = signal_generator_AMPA(time_points,
+                                                   *candidate_AMPA[0:7])
+        signal_AMPA_spillover = signal_generator_AMPA_spillover(time_points,
                                                       pulse_train,
                                                       single_waveform_length_AMPA,
                                                       dt,
                                                       0.,
-                                                      *candidate_AMPA[9:])
+                                                      *candidate_AMPA[7:])
         signal_NMDA = signal_generator_NMDA(time_points,
                                             pulse_train,
                                             single_waveform_length_NMDA,

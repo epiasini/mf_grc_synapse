@@ -17,7 +17,7 @@ class Rothman_AMPA_STP(inspyred.benchmarks.Benchmark):
     def __init__(self):
         # parameters: for both direct and spillover components, 7 for
         # the waveform and 2 for the plasticity.
-        inspyred.benchmarks.Benchmark.__init__(self, dimensions=18)
+        inspyred.benchmarks.Benchmark.__init__(self, dimensions=16)
         # load experimental data
         self.frequencies = [5, 10, 20, 30, 50, 80, 100, 150]
         self.n_protocols = 4
@@ -38,20 +38,20 @@ class Rothman_AMPA_STP(inspyred.benchmarks.Benchmark):
         self.maximize = False
 
         self.bounds = [(0.1, 0.41), # d_tau_rise **direct (waveform)**
-                       (0.4, 4.5), # d_a1
+                       (0.4, 6.5), # d_a1
                        (0.07, 0.65), # d_a2
-                       (0.0001, 0.055), # d_a3
-                       (0.05, 0.35), # d_tau_dec1
-                       (1.35, 2.45), # d_tau_dec2
-                       (15., 23.), # d_tau_dec3
+                       #(0.0001, 0.055), # d_a3
+                       (0.05, 0.90), # d_tau_dec1
+                       (1.35, 4.2), # d_tau_dec2
+                       #(15., 23.), # d_tau_dec3
                        (0.01, 0.8), # d_u_se   **direct (STD)**
-                       (9., 150.), # d_tau_dep
+                       (9., 200.), # d_tau_dep
                        (0.1, 1.2), # s_tau_rise **spillover (waveform)**
-                       (0.005, 0.21), # s_a1
-                       (0.005, 0.42), # s_a2
-                       (0.005, 0.153), # s_a3
-                       (0.5, 1.53), # s_tau_dec1
-                       (7.0, 8.0), # s_tau_dec2
+                       (0.005, 0.31), # s_a1
+                       (0.005, 0.72), # s_a2
+                       (0.005, 0.353), # s_a3
+                       (0.23, 2.53), # s_tau_dec1
+                       (3.0, 8.0), # s_tau_dec2
                        (28.1, 60.), #s_tau_dec3
                        (0.001, .8), # s_u_se   **spillover (STD)**
                        (2., 80.)] # s_tau_dep
@@ -80,7 +80,7 @@ def plast_table(pulse_train, u_se, tau_rec):
     # synaptic waveform.
     return r * u_se
 
-def synthetic_conductance_signal(time_points, pulse_train, single_waveform_length, timestep_size, delay, tau_rise, a1, a2, a3, tau_dec1, tau_dec2, tau_dec3, u_se, tau_rec):
+def synthetic_conductance_signal_direct(time_points, pulse_train, single_waveform_length, timestep_size, delay, tau_rise, a1, a2, tau_dec1, tau_dec2, u_se, tau_rec):
     # this is meant to be used for a single component (direct or
     # spillover). The 'delay' compensates the offset that is present
     # between the experimental pulse times and the times when the
@@ -122,18 +122,18 @@ def fitness_to_experiment(cs):
     distances = []
     for k, ep in enumerate(problem.exp_pulses):
         timepoints = problem.exp_data[k][:,0]
-        signal_direct = synthetic_conductance_signal(timepoints,
-                                                     ep,
-                                                     problem.single_waveform_lengths[k],
-                                                     problem.timestep_sizes[k],
-                                                     0.54,
-                                                     *cs[:9])
-        signal_spillover = synthetic_conductance_signal(timepoints,
-                                                        ep,
-                                                        problem.single_waveform_lengths[k],
-                                                        problem.timestep_sizes[k],
-                                                        0.54,
-                                                        *cs[9:])
+        signal_direct = synthetic_conductance_signal_direct(timepoints,
+                                                            ep,
+                                                            problem.single_waveform_lengths[k],
+                                                            problem.timestep_sizes[k],
+                                                            0.54,
+                                                            *cs[:7])
+        signal_spillover = synthetic_conductance_signal_spillover(timepoints,
+                                                                  ep,
+                                                                  problem.single_waveform_lengths[k],
+                                                                  problem.timestep_sizes[k],
+                                                                  0.54,
+                                                                  *cs[7:])
         distances.append(np.linalg.norm(signal_direct+signal_spillover-problem.exp_data[k][:,1])/np.sqrt(timepoints.shape[0]))# + 0.15 * np.abs(normalised_difference_trace.sum()))
     return sum(distances)/len(distances)
 
@@ -148,7 +148,7 @@ def evaluator(candidates, args):
 def main(plot=False):
     prng = random.Random()
     prng.seed(int(time.time()))
-    max_evaluations = 7000
+    max_evaluations = 63000
     pop_size = 140
 
     algorithm = inspyred.swarm.PSO(prng)
@@ -169,9 +169,9 @@ def main(plot=False):
                                  num_elites=1)
     # Sort and print the best individual
     final_pop.sort(reverse=True)
-    selected_candidate = final_pop[0].candidate[:18]
-    print("direct:    {0}".format(selected_candidate[:9]))
-    print("spillover: {0}".format(selected_candidate[9:]))
+    selected_candidate = final_pop[0].candidate[:16]
+    print("direct:    {0}".format(selected_candidate[:7]))
+    print("spillover: {0}".format(selected_candidate[7:]))
     print("fitness:   {0}".format(final_pop[0].fitness))
     if plot:
         plot_optimisation_results(problem,
@@ -195,18 +195,18 @@ def plot_optimisation_results(problem, candidate, fitness, max_evaluations, pop_
 
     for k, ep in enumerate(problem.exp_pulses):
         timepoints = problem.exp_data[k][:,0]
-        signal_direct = synthetic_conductance_signal(timepoints,
-                                                     ep,
-                                                     problem.single_waveform_lengths[k],
-                                                     problem.timestep_sizes[k],
-                                                     0.54,
-                                                     *candidate[0:9])
-        signal_spillover = synthetic_conductance_signal(timepoints,
-                                                        ep,
-                                                        problem.single_waveform_lengths[k],
-                                                        problem.timestep_sizes[k],
-                                                        0.54,
-                                                        *candidate[9:])
+        signal_direct = synthetic_conductance_signal_direct(timepoints,
+                                                            ep,
+                                                            problem.single_waveform_lengths[k],
+                                                            problem.timestep_sizes[k],
+                                                            0.54,
+                                                            *candidate[0:7])
+        signal_spillover = synthetic_conductance_signal_spillover(timepoints,
+                                                                  ep,
+                                                                  problem.single_waveform_lengths[k],
+                                                                  problem.timestep_sizes[k],
+                                                                  0.54,
+                                                                  *candidate[7:])
         # rothman_signal = rothman2012_AMPA_signal(timepoints,
         #                                          ep,
         #                                          problem.single_waveform_lengths[k],
