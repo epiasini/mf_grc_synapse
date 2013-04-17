@@ -11,7 +11,7 @@ DATA_DIR = "/home/ucbtepi/doc/jason_data/JasonsIAFmodel/Jason_Laurence_AMPA_NMDA
 NMDA_DIR = DATA_DIR + "/NMDA"
 AMPA_DIR = DATA_DIR + "/AMPA"
 TIME_DIR = DATA_DIR + "/StimTimes"
-PULSE_CUTOFF = 200
+PULSE_CUTOFF = 300
 
 class Rothman_AMPA_STP(inspyred.benchmarks.Benchmark):
     def __init__(self):
@@ -61,7 +61,7 @@ problem = Rothman_AMPA_STP()
 bounder = inspyred.ec.Bounder([b[0] for b in problem.bounds],
                               [b[1] for b in problem.bounds])
 
-def dep_table(pulse_train, u_se, tau_rec):
+def plast_table(pulse_train, u_se, tau_rec):
     # r[n,k] is the remaining fraction of synaptic resource before
     # nth pulse. The remaing fraction before the 0-th pulse is
     # supposed to be 1.
@@ -87,15 +87,29 @@ def synthetic_conductance_signal(time_points, pulse_train, single_waveform_lengt
     # responses start to appear on the experimental recordings. It is
     # present in both the AMPA and the NMDA case, but with a different
     # value.
-    delay_time_points = int(round(delay/timestep_size))
+
     n_time_points = time_points.shape[0]
-    dep_factors = dep_table(pulse_train, u_se, tau_rec)
-    single_pulse_waveform = a_g_comp(time_points[0:single_waveform_length], tau_rise, a1, tau_dec1, a2, tau_dec2, a3, tau_dec3)
     signal = np.zeros(shape=n_time_points)
-    for n, pulse in enumerate(pulse_train):
-        start = np.searchsorted(time_points, pulse) + delay_time_points
-        end = start + single_waveform_length
-        signal[start:end] += (single_pulse_waveform * dep_factors[n])[:single_pulse_waveform.shape[0]-(end - n_time_points)]
+    # compute a table of all the plasticity-scaled waveforms that we
+    # will need to add to form the total conductance train.
+    plast_factors = plast_table(pulse_train, u_se, tau_rec)
+    single_pulse_waveform = a_g_comp(time_points[0:single_waveform_length],
+                                     tau_rise,
+                                     a1,
+                                     tau_dec1,
+                                     a2,
+                                     tau_dec2,
+                                     a3,
+                                     tau_dec3)
+    pulse_waveforms = np.outer(plast_factors, single_pulse_waveform)
+    # find the indexes of the 'signal' array that correspond to the
+    # pulse times, as they are where we need to start summing each of
+    # the scaled waveforms we have precomputed.
+    start_points = np.floor((pulse_train + delay - time_points[0])/timestep_size)
+    end_points = start_points + single_waveform_length
+    # sum all waveforms with the appropriate offsets
+    for n, waveform in enumerate(pulse_waveforms):
+        signal[start_points[n]:end_points[n]] += waveform[:single_waveform_length-(end_points[n] - n_time_points)]
     return signal
 
 def fitness_to_experiment(cs):
