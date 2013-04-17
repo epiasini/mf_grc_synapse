@@ -11,13 +11,13 @@ DATA_DIR = "/home/ucbtepi/doc/jason_data/JasonsIAFmodel/Jason_Laurence_AMPA_NMDA
 NMDA_DIR = DATA_DIR + "/NMDA"
 AMPA_DIR = DATA_DIR + "/AMPA"
 TIME_DIR = DATA_DIR + "/StimTimes"
-PULSE_CUTOFF = 200
+PULSE_CUTOFF = 300
 
 class Rothman_AMPA_STP(inspyred.benchmarks.Benchmark):
     def __init__(self):
         # parameters: for both direct and spillover components, 7 for
         # the waveform and 2 for the plasticity.
-        inspyred.benchmarks.Benchmark.__init__(self, dimensions=18)
+        inspyred.benchmarks.Benchmark.__init__(self, dimensions=16)
         # load experimental data
         self.frequencies = [5, 10, 20, 30, 50, 80, 100, 150]
         self.n_protocols = 4
@@ -38,20 +38,20 @@ class Rothman_AMPA_STP(inspyred.benchmarks.Benchmark):
         self.maximize = False
 
         self.bounds = [(0.1, 0.41), # d_tau_rise **direct (waveform)**
-                       (0.4, 4.5), # d_a1
+                       (0.4, 6.5), # d_a1
                        (0.07, 0.65), # d_a2
-                       (0.0001, 0.055), # d_a3
-                       (0.05, 0.35), # d_tau_dec1
-                       (1.35, 2.45), # d_tau_dec2
-                       (15., 23.), # d_tau_dec3
+                       #(0.0001, 0.055), # d_a3
+                       (0.05, 0.90), # d_tau_dec1
+                       (1.35, 4.2), # d_tau_dec2
+                       #(15., 23.), # d_tau_dec3
                        (0.01, 0.8), # d_u_se   **direct (STD)**
-                       (9., 150.), # d_tau_dep
+                       (9., 200.), # d_tau_dep
                        (0.1, 1.2), # s_tau_rise **spillover (waveform)**
-                       (0.005, 0.21), # s_a1
-                       (0.005, 0.42), # s_a2
+                       (0.005, 0.31), # s_a1
+                       (0.005, 0.72), # s_a2
                        (0.005, 0.153), # s_a3
-                       (0.5, 1.53), # s_tau_dec1
-                       (7.0, 8.0), # s_tau_dec2
+                       (0.4, 2.53), # s_tau_dec1
+                       (4.0, 8.0), # s_tau_dec2
                        (28.1, 60.), #s_tau_dec3
                        (0.001, .8), # s_u_se   **spillover (STD)**
                        (2., 80.)] # s_tau_dep
@@ -61,7 +61,7 @@ problem = Rothman_AMPA_STP()
 bounder = inspyred.ec.Bounder([b[0] for b in problem.bounds],
                               [b[1] for b in problem.bounds])
 
-def dep_table(pulse_train, u_se, tau_rec):
+def plast_table(pulse_train, u_se, tau_rec):
     # r[n,k] is the remaining fraction of synaptic resource before
     # nth pulse. The remaing fraction before the 0-th pulse is
     # supposed to be 1.
@@ -80,22 +80,68 @@ def dep_table(pulse_train, u_se, tau_rec):
     # synaptic waveform.
     return r * u_se
 
-def synthetic_conductance_signal(time_points, pulse_train, single_waveform_length, timestep_size, delay, tau_rise, a1, a2, a3, tau_dec1, tau_dec2, tau_dec3, u_se, tau_rec):
+def synthetic_conductance_signal_direct(time_points, pulse_train, single_waveform_length, timestep_size, delay, tau_rise, a1, a2, tau_dec1, tau_dec2, u_se, tau_rec):
     # this is meant to be used for a single component (direct or
     # spillover). The 'delay' compensates the offset that is present
     # between the experimental pulse times and the times when the
     # responses start to appear on the experimental recordings. It is
     # present in both the AMPA and the NMDA case, but with a different
     # value.
-    delay_time_points = int(round(delay/timestep_size))
+
     n_time_points = time_points.shape[0]
-    dep_factors = dep_table(pulse_train, u_se, tau_rec)
-    single_pulse_waveform = a_g_comp(time_points[0:single_waveform_length], tau_rise, a1, tau_dec1, a2, tau_dec2, a3, tau_dec3)
     signal = np.zeros(shape=n_time_points)
-    for n, pulse in enumerate(pulse_train):
-        start = np.searchsorted(time_points, pulse) + delay_time_points
-        end = start + single_waveform_length
-        signal[start:end] += (single_pulse_waveform * dep_factors[n])[:single_pulse_waveform.shape[0]-(end - n_time_points)]
+    # compute a table of all the plasticity-scaled waveforms that we
+    # will need to add to form the total conductance train.
+    plast_factors = plast_table(pulse_train, u_se, tau_rec)
+    single_pulse_waveform = a_g_comp(time_points[0:single_waveform_length],
+                                     tau_rise,
+                                     a1,
+                                     tau_dec1,
+                                     a2,
+                                     tau_dec2,
+                                     0,
+                                     1)
+    pulse_waveforms = np.outer(plast_factors, single_pulse_waveform)
+    # find the indexes of the 'signal' array that correspond to the
+    # pulse times, as they are where we need to start summing each of
+    # the scaled waveforms we have precomputed.
+    start_points = np.floor((pulse_train + delay - time_points[0])/timestep_size)
+    end_points = start_points + single_waveform_length
+    # sum all waveforms with the appropriate offsets
+    for n, waveform in enumerate(pulse_waveforms):
+        signal[start_points[n]:end_points[n]] += waveform[:single_waveform_length-(end_points[n] - n_time_points)]
+    return signal
+
+def synthetic_conductance_signal_spillover(time_points, pulse_train, single_waveform_length, timestep_size, delay, tau_rise, a1, a2, a3, tau_dec1, tau_dec2, tau_dec3, u_se, tau_rec):
+    # this is meant to be used for a single component (direct or
+    # spillover). The 'delay' compensates the offset that is present
+    # between the experimental pulse times and the times when the
+    # responses start to appear on the experimental recordings. It is
+    # present in both the AMPA and the NMDA case, but with a different
+    # value.
+
+    n_time_points = time_points.shape[0]
+    signal = np.zeros(shape=n_time_points)
+    # compute a table of all the plasticity-scaled waveforms that we
+    # will need to add to form the total conductance train.
+    plast_factors = plast_table(pulse_train, u_se, tau_rec)
+    single_pulse_waveform = a_g_comp(time_points[0:single_waveform_length],
+                                     tau_rise,
+                                     a1,
+                                     tau_dec1,
+                                     a2,
+                                     tau_dec2,
+                                     a3,
+                                     tau_dec3)
+    pulse_waveforms = np.outer(plast_factors, single_pulse_waveform)
+    # find the indexes of the 'signal' array that correspond to the
+    # pulse times, as they are where we need to start summing each of
+    # the scaled waveforms we have precomputed.
+    start_points = np.floor((pulse_train + delay - time_points[0])/timestep_size)
+    end_points = start_points + single_waveform_length
+    # sum all waveforms with the appropriate offsets
+    for n, waveform in enumerate(pulse_waveforms):
+        signal[start_points[n]:end_points[n]] += waveform[:single_waveform_length-(end_points[n] - n_time_points)]
     return signal
 
 def fitness_to_experiment(cs):
@@ -108,18 +154,18 @@ def fitness_to_experiment(cs):
     distances = []
     for k, ep in enumerate(problem.exp_pulses):
         timepoints = problem.exp_data[k][:,0]
-        signal_direct = synthetic_conductance_signal(timepoints,
-                                                     ep,
-                                                     problem.single_waveform_lengths[k],
-                                                     problem.timestep_sizes[k],
-                                                     0.5,
-                                                     *cs[:9])
-        signal_spillover = synthetic_conductance_signal(timepoints,
-                                                        ep,
-                                                        problem.single_waveform_lengths[k],
-                                                        problem.timestep_sizes[k],
-                                                        0.5,
-                                                        *cs[9:])
+        signal_direct = synthetic_conductance_signal_direct(timepoints,
+                                                            ep,
+                                                            problem.single_waveform_lengths[k],
+                                                            problem.timestep_sizes[k],
+                                                            0.5,
+                                                            *cs[:7])
+        signal_spillover = synthetic_conductance_signal_spillover(timepoints,
+                                                                  ep,
+                                                                  problem.single_waveform_lengths[k],
+                                                                  problem.timestep_sizes[k],
+                                                                  0.5,
+                                                                  *cs[7:])
         distances.append(np.linalg.norm(signal_direct+signal_spillover-problem.exp_data[k][:,1])/np.sqrt(timepoints.shape[0]))# + 0.15 * np.abs(normalised_difference_trace.sum()))
     return sum(distances)/len(distances)
 
@@ -134,7 +180,7 @@ def evaluator(candidates, args):
 def main(plot=False):
     prng = random.Random()
     prng.seed(int(time.time()))
-    max_evaluations = 126000
+    max_evaluations = 21000
     pop_size = 140
 
     algorithm = inspyred.swarm.PSO(prng)
@@ -155,9 +201,9 @@ def main(plot=False):
                                  num_elites=1)
     # Sort and print the best individual
     final_pop.sort(reverse=True)
-    selected_candidate = final_pop[0].candidate[:18]
-    print("direct:    {0}".format(selected_candidate[:9]))
-    print("spillover: {0}".format(selected_candidate[9:]))
+    selected_candidate = final_pop[0].candidate[:16]
+    print("direct:    {0}".format(selected_candidate[:7]))
+    print("spillover: {0}".format(selected_candidate[7:]))
     print("fitness:   {0}".format(final_pop[0].fitness))
     if plot:
         plot_optimisation_results(problem,
@@ -181,18 +227,18 @@ def plot_optimisation_results(problem, candidate, fitness, max_evaluations, pop_
 
     for k, ep in enumerate(problem.exp_pulses):
         timepoints = problem.exp_data[k][:,0]
-        signal_direct = synthetic_conductance_signal(timepoints,
-                                                     ep,
-                                                     problem.single_waveform_lengths[k],
-                                                     problem.timestep_sizes[k],
-                                                     0.5,
-                                                     *candidate[0:9])
-        signal_spillover = synthetic_conductance_signal(timepoints,
-                                                        ep,
-                                                        problem.single_waveform_lengths[k],
-                                                        problem.timestep_sizes[k],
-                                                        0.5,
-                                                        *candidate[9:])
+        signal_direct = synthetic_conductance_signal_direct(timepoints,
+                                                            ep,
+                                                            problem.single_waveform_lengths[k],
+                                                            problem.timestep_sizes[k],
+                                                            0.5,
+                                                            *candidate[0:7])
+        signal_spillover = synthetic_conductance_signal_spillover(timepoints,
+                                                                  ep,
+                                                                  problem.single_waveform_lengths[k],
+                                                                  problem.timestep_sizes[k],
+                                                                  0.5,
+                                                                  *candidate[7:])
         # rothman_signal = rothman2012_AMPA_signal(timepoints,
         #                                          ep,
         #                                          problem.single_waveform_lengths[k],
