@@ -126,13 +126,13 @@ def fitness_to_experiment(cs):
                                                      ep,
                                                      problem.single_waveform_lengths[k],
                                                      problem.timestep_sizes[k],
-                                                     0.5,
+                                                     0.54,
                                                      *cs[:9])
         signal_spillover = synthetic_conductance_signal(timepoints,
                                                         ep,
                                                         problem.single_waveform_lengths[k],
                                                         problem.timestep_sizes[k],
-                                                        0.5,
+                                                        0.54,
                                                         *cs[9:])
         distances.append(np.linalg.norm(signal_direct+signal_spillover-problem.exp_data[k][:,1])/np.sqrt(timepoints.shape[0]))# + 0.15 * np.abs(normalised_difference_trace.sum()))
     return sum(distances)/len(distances)
@@ -148,7 +148,7 @@ def evaluator(candidates, args):
 def main(plot=False):
     prng = random.Random()
     prng.seed(int(time.time()))
-    max_evaluations = 126000
+    max_evaluations = 7000
     pop_size = 140
 
     algorithm = inspyred.swarm.PSO(prng)
@@ -199,13 +199,13 @@ def plot_optimisation_results(problem, candidate, fitness, max_evaluations, pop_
                                                      ep,
                                                      problem.single_waveform_lengths[k],
                                                      problem.timestep_sizes[k],
-                                                     0.5,
+                                                     0.54,
                                                      *candidate[0:9])
         signal_spillover = synthetic_conductance_signal(timepoints,
                                                         ep,
                                                         problem.single_waveform_lengths[k],
                                                         problem.timestep_sizes[k],
-                                                        0.5,
+                                                        0.54,
                                                         *candidate[9:])
         # rothman_signal = rothman2012_AMPA_signal(timepoints,
         #                                          ep,
