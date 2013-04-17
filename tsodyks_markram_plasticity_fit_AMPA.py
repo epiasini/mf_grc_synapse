@@ -49,9 +49,9 @@ class Rothman_AMPA_STP(inspyred.benchmarks.Benchmark):
                        (0.1, 1.2), # s_tau_rise **spillover (waveform)**
                        (0.005, 0.31), # s_a1
                        (0.005, 0.72), # s_a2
-                       (0.005, 0.153), # s_a3
-                       (0.4, 2.53), # s_tau_dec1
-                       (4.0, 8.0), # s_tau_dec2
+                       (0.005, 0.353), # s_a3
+                       (0.23, 2.53), # s_tau_dec1
+                       (3.0, 8.0), # s_tau_dec2
                        (28.1, 60.), #s_tau_dec3
                        (0.001, .8), # s_u_se   **spillover (STD)**
                        (2., 80.)] # s_tau_dep
@@ -158,13 +158,13 @@ def fitness_to_experiment(cs):
                                                             ep,
                                                             problem.single_waveform_lengths[k],
                                                             problem.timestep_sizes[k],
-                                                            0.5,
+                                                            0.54,
                                                             *cs[:7])
         signal_spillover = synthetic_conductance_signal_spillover(timepoints,
                                                                   ep,
                                                                   problem.single_waveform_lengths[k],
                                                                   problem.timestep_sizes[k],
-                                                                  0.5,
+                                                                  0.54,
                                                                   *cs[7:])
         distances.append(np.linalg.norm(signal_direct+signal_spillover-problem.exp_data[k][:,1])/np.sqrt(timepoints.shape[0]))# + 0.15 * np.abs(normalised_difference_trace.sum()))
     return sum(distances)/len(distances)
@@ -180,7 +180,7 @@ def evaluator(candidates, args):
 def main(plot=False):
     prng = random.Random()
     prng.seed(int(time.time()))
-    max_evaluations = 21000
+    max_evaluations = 63000
     pop_size = 140
 
     algorithm = inspyred.swarm.PSO(prng)
@@ -231,13 +231,13 @@ def plot_optimisation_results(problem, candidate, fitness, max_evaluations, pop_
                                                             ep,
                                                             problem.single_waveform_lengths[k],
                                                             problem.timestep_sizes[k],
-                                                            0.5,
+                                                            0.54,
                                                             *candidate[0:7])
         signal_spillover = synthetic_conductance_signal_spillover(timepoints,
                                                                   ep,
                                                                   problem.single_waveform_lengths[k],
                                                                   problem.timestep_sizes[k],
-                                                                  0.5,
+                                                                  0.54,
                                                                   *candidate[7:])
         # rothman_signal = rothman2012_AMPA_signal(timepoints,
         #                                          ep,
