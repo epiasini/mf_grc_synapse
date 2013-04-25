@@ -99,6 +99,38 @@ def synthetic_conductance_signal_direct(time_points, pulse_train, single_wavefor
                                      tau_dec1,
                                      a2,
                                      tau_dec2,
+                                     0,
+                                     1)
+    pulse_waveforms = np.outer(plast_factors, single_pulse_waveform)
+    # find the indexes of the 'signal' array that correspond to the
+    # pulse times, as they are where we need to start summing each of
+    # the scaled waveforms we have precomputed.
+    start_points = np.floor((pulse_train + delay - time_points[0])/timestep_size)
+    end_points = start_points + single_waveform_length
+    # sum all waveforms with the appropriate offsets
+    for n, waveform in enumerate(pulse_waveforms):
+        signal[start_points[n]:end_points[n]] += waveform[:single_waveform_length-(end_points[n] - n_time_points)]
+    return signal
+
+def synthetic_conductance_signal_spillover(time_points, pulse_train, single_waveform_length, timestep_size, delay, tau_rise, a1, a2, a3, tau_dec1, tau_dec2, tau_dec3, u_se, tau_rec):
+    # this is meant to be used for a single component (direct or
+    # spillover). The 'delay' compensates the offset that is present
+    # between the experimental pulse times and the times when the
+    # responses start to appear on the experimental recordings. It is
+    # present in both the AMPA and the NMDA case, but with a different
+    # value.
+
+    n_time_points = time_points.shape[0]
+    signal = np.zeros(shape=n_time_points)
+    # compute a table of all the plasticity-scaled waveforms that we
+    # will need to add to form the total conductance train.
+    plast_factors = plast_table(pulse_train, u_se, tau_rec)
+    single_pulse_waveform = a_g_comp(time_points[0:single_waveform_length],
+                                     tau_rise,
+                                     a1,
+                                     tau_dec1,
+                                     a2,
+                                     tau_dec2,
                                      a3,
                                      tau_dec3)
     pulse_waveforms = np.outer(plast_factors, single_pulse_waveform)
@@ -224,29 +256,34 @@ def plot_optimisation_results(problem, candidate, fitness, max_evaluations, pop_
     fig.suptitle('parameters: {0}\n fitness: {1} max_evaluations: {2} pop_size: {3}\nRothman2012 fitness: {4}'.format(candidate, fitness, max_evaluations, pop_size, rothman_fitness))
     plt.savefig('Rothman_AMPA_TM_fit_{0}.png'.format(time.time()))
 
-def plot_example_trace(problem=None, candidate=None):
-    #a = np.loadtxt(NMDA_DIR + "/NMDA_10hz_G2_181103.txt")
-    a = np.loadtxt(AMPA_DIR + "/Avg_AMPA_10hz_G2.txt")
-    t = np.loadtxt(TIME_DIR + "/gp2_10hz_times.txt")
+def plot_lems_comparison(problem, candidate):
+    lems_data = np.loadtxt("gAMPA_LEMS_20hz_G0.dat")
+    timepoints = lems_data[:,0] * 1e3 # transform to ms
+    lems_trace = lems_data[:,1] * 1e9 # transform to nS
+    print(timepoints.shape, lems_trace.shape)
+    print timepoints
 
     fig, ax = plt.subplots()
-    ax.plot(a[:,0], a[:,1])
-    ax.scatter(t, np.zeros(shape=t.shape)-0.05, color='r')
+    #    ax.scatter(t, np.zeros(shape=t.shape)-0.05, color='r')
+    print problem.exp_pulses[8]
 
-    if problem and candidate:
-        signal_direct = synthetic_conductance_signal(a[:,0],
-                                                     t,
-                                                     problem.single_waveform_lengths[5],
-                                                     problem.timestep_sizes[5],
-                                                     *candidate[1:9])
-        signal_spillover = synthetic_conductance_signal(a[:,0],
-                                                        t,
-                                                        problem.single_waveform_lengths[5],
-                                                        problem.timestep_sizes[5],
-                                                        *candidate[9:])
-        ax.plot(a[:,0], signal_direct+signal_spillover, linewidth=2.5)
-        ax.plot(a[:,0], signal_direct)
-        ax.plot(a[:,0], signal_spillover)
+    signal_direct = synthetic_conductance_signal_direct(timepoints,
+                                                        problem.exp_pulses[8],
+                                                        problem.single_waveform_lengths[8],
+                                                        0.025,
+                                                        0.,
+                                                        *candidate[0:7])
+    signal_spillover = synthetic_conductance_signal_spillover(timepoints,
+                                                              problem.exp_pulses[8],
+                                                              problem.single_waveform_lengths[8],
+                                                              0.025,
+                                                              0.,
+                                                              *candidate[7:])
+
+    ax.plot(timepoints, lems_trace, linewidth=1.5)
+    ax.plot(timepoints, signal_direct+signal_spillover, linewidth=1.5)
+    # ax.plot(a[:,0], signal_direct)
+    # ax.plot(a[:,0], signal_spillover)
 
     plt.show()
 
