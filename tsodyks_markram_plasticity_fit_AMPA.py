@@ -1,3 +1,35 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Model fitting for J Rothman's data on the mossy fibre to granule cell
+synapse, AMPA component.
+
+The model is the sum of a direct (fast) and spillover (slow)
+component, and both of them exhibit short term depression (STD). The
+basic waveforms are multiexponential (one rise time and two decay
+times for the direct component, one rise time and three decay times
+for the spillover component), and STD is modeled after Tsodyks and
+Markram 1997.
+
+The experimental data consists of 32 conductance waveforms (8
+frequencies, 4 different Poisson spike trains generated at any given
+frequency; each trace an average across four cells; expressed in nS)
+paired with the sequences of stimulation times used to elicit
+them. The core idea of the fitting method is to measure how bad a
+given model (ie, set of parameter defining basic waveform shapes and
+plasticity) is by using it to generate 32 synthetic conductance traces
+corresponding to the experimental ones, and then measuring the average
+distance between the synthetic and the experimental traces.
+
+Once the fits have been done, the basic waveforms have to undergo
+another scaling step before being used in a actual simulation. This is
+because the experimental data we are fitting to have been taken on a
+small number of cells (n=4), and better estimates for the peak values
+of the AMPA conductance are available in the literature. So,
+basically, we use our fits to determine the basic waveform shapes and
+plasticity properties but we refer to the peak AMPA value in
+Sargent2005 for the final scaling.
+"""
 import random
 import time
 import h5py
@@ -15,8 +47,10 @@ PULSE_CUTOFF = 300
 
 class Rothman_AMPA_STP(inspyred.benchmarks.Benchmark):
     def __init__(self):
-        # parameters: for both direct and spillover components, 7 for
-        # the waveform and 2 for the plasticity.
+        # parameters: for the plasticity, 2 parameters for each
+        # (direct and spillover) component. For the basic waveforms, 5
+        # parameters for the direct component and 7 parameters for the
+        # spillover.
         inspyred.benchmarks.Benchmark.__init__(self, dimensions=16)
         # load experimental data
         self.frequencies = [5, 10, 20, 30, 50, 80, 100, 150]
@@ -40,10 +74,8 @@ class Rothman_AMPA_STP(inspyred.benchmarks.Benchmark):
         self.bounds = [(0.1, 0.41), # d_tau_rise **direct (waveform)**
                        (0.4, 6.5), # d_a1
                        (0.07, 0.65), # d_a2
-                       #(0.0001, 0.055), # d_a3
                        (0.05, 0.90), # d_tau_dec1
                        (1.35, 4.2), # d_tau_dec2
-                       #(15., 23.), # d_tau_dec3
                        (0.01, 0.8), # d_u_se   **direct (STD)**
                        (9., 200.), # d_tau_dep
                        (0.1, 1.2), # s_tau_rise **spillover (waveform)**
@@ -56,8 +88,9 @@ class Rothman_AMPA_STP(inspyred.benchmarks.Benchmark):
                        (0.001, .8), # s_u_se   **spillover (STD)**
                        (2., 80.)] # s_tau_dep
 
+# this is not very elegant, but needed for simple parallelisation
+# (multiprocessing) with inspyred
 problem = Rothman_AMPA_STP()
-
 bounder = inspyred.ec.Bounder([b[0] for b in problem.bounds],
                               [b[1] for b in problem.bounds])
 
@@ -178,6 +211,7 @@ def evaluator(candidates, args):
 
 
 def main(plot=False):
+    """Perform the main Tsodyks-Markram fit."""
     prng = random.Random()
     prng.seed(int(time.time()))
     max_evaluations = 63000
@@ -256,39 +290,89 @@ def plot_optimisation_results(problem, candidate, fitness, max_evaluations, pop_
     fig.suptitle('parameters: {0}\n fitness: {1} max_evaluations: {2} pop_size: {3}\nRothman2012 fitness: {4}'.format(candidate, fitness, max_evaluations, pop_size, rothman_fitness))
     plt.savefig('Rothman_AMPA_TM_fit_{0}.png'.format(time.time()))
 
+def scale_to_sargent():
+    """Scale fit values to match peak AMPA reported in Sargent2005."""
+    sargent_peak = 0.63 # (nS)
+    candidate = [0.3274, 4.492, 0.3659, 0.3351, 1.651, 0.1249, 131.0, 0.5548, 0.3000, 0.3376, 0.153, 0.4, 4.899, 43.10, 0.2792, 14.85]
+
+    timestep = 0.01
+    timepoints = np.arange(0, 300, timestep)
+    pulse_times = np.array([10.])
+    single_waveform_length = timepoints.shape[0]
+    signal_direct = synthetic_conductance_signal_direct(timepoints,
+                                                        pulse_times,
+                                                        single_waveform_length,
+                                                        timestep,
+                                                        0.,
+                                                        *candidate[:7])
+    signal_spillover = synthetic_conductance_signal_spillover(timepoints,
+                                                              pulse_times,
+                                                              single_waveform_length,
+                                                              timestep,
+                                                              0.,
+                                                              *candidate[7:])
+    signal = signal_direct + signal_spillover
+    scaled_signal = sargent_peak * signal/signal.max()
+    scaled_candidate = candidate[:]
+    for k in [1,2,8,9,10]:
+        scaled_candidate[k] /= signal.max()
+    print(scaled_candidate)
+
+    fig, ax = plt.subplots()
+    ax.plot(timepoints, signal, label="fit to Rothman data")
+    ax.plot(timepoints, scaled_signal, label="scaled to peak value by Sargent")
+    ax.legend(loc="best")
+    fig.suptitle("direct {0}\nspillover {1}".format(scaled_candidate[:7],
+                                                    scaled_candidate[7:]))
+    plt.show()
+    # rounded scaled candidate should be [0.3274, 5.911, 0.4815,
+    # 0.3351, 1.651, 0.1249, 131.0, 0.5548, 0.3948, 0.4442, 0.2013,
+    # 0.4, 4.899, 43.1, 0.2792, 14.85]
+
 def plot_lems_comparison(problem, candidate):
     lems_data = np.loadtxt("gAMPA_LEMS_20hz_G0.dat")
     timepoints = lems_data[:,0] * 1e3 # transform to ms
     lems_trace = lems_data[:,1] * 1e9 # transform to nS
-    print(timepoints.shape, lems_trace.shape)
-    print timepoints
 
-    fig, ax = plt.subplots()
-    #    ax.scatter(t, np.zeros(shape=t.shape)-0.05, color='r')
-    print problem.exp_pulses[8]
+    timestep = 0.025 # has to match what was used in the LEMS simulation
+    pulse_times = problem.exp_pulses[8]
+    single_waveform_length = problem.single_waveform_lengths[8]
+
+
 
     signal_direct = synthetic_conductance_signal_direct(timepoints,
-                                                        problem.exp_pulses[8],
-                                                        problem.single_waveform_lengths[8],
-                                                        0.025,
+                                                        pulse_times,
+                                                        single_waveform_length,
+                                                        timestep,
                                                         0.,
-                                                        *candidate[0:7])
+                                                        *candidate[:7])
     signal_spillover = synthetic_conductance_signal_spillover(timepoints,
-                                                              problem.exp_pulses[8],
-                                                              problem.single_waveform_lengths[8],
-                                                              0.025,
+                                                              pulse_times,
+                                                              single_waveform_length,
+                                                              timestep,
                                                               0.,
                                                               *candidate[7:])
 
+    fig, ax = plt.subplots()
+    ax.scatter(pro, np.zeros(shape=t.shape)-0.05, color='r')
     ax.plot(timepoints, lems_trace, linewidth=1.5)
     ax.plot(timepoints, signal_direct+signal_spillover, linewidth=1.5)
-    # ax.plot(a[:,0], signal_direct)
-    # ax.plot(a[:,0], signal_spillover)
-
     plt.show()
 
 if __name__ == '__main__':
-    main(plot=True)
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--fit",
+                        help=main.__doc__,
+                        action="store_true")
+    parser.add_argument("--scale",
+                        help=scale_to_sargent.__doc__,
+                        action="store_true")
+    args = parser.parse_args()
+    if args.fit:
+        main(plot=True)
+    if args.scale:
+        scale_to_sargent()
 
 #to profile, from shell:
 #python -m cProfile -o output.pstats tsodyks_markram_plasticity_fit.py
