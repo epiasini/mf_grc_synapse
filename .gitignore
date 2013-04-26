@@ -9,3 +9,5 @@ generatedPSICS
 simulations
 *.bak
 ./tmp*
+Rothman_AMPA_TM_fit_*.png
+Rothman_NMDA_TM_fit_*.png
