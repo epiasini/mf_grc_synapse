@@ -240,13 +240,16 @@ def main(plot=False):
     print("spillover: {0}".format(selected_candidate[7:]))
     print("fitness:   {0}".format(final_pop[0].fitness))
     if plot:
-        plot_optimisation_results(problem,
-                                  selected_candidate,
+        plot_optimisation_results(selected_candidate,
                                   final_pop[0].fitness,
                                   max_evaluations,
                                   pop_size)
 
-def plot_optimisation_results(problem, candidate, fitness, max_evaluations, pop_size):
+def plot_optimisation_results(candidate, fitness, max_evaluations, pop_size):
+    """
+    Plot a comparison of the model and the experimental data across
+    all experimental traces.
+    """
     fig, ax = plt.subplots(nrows=8, ncols=4, figsize=(160,80), dpi=500)
     rothman_fitness = 0
 
@@ -290,10 +293,9 @@ def plot_optimisation_results(problem, candidate, fitness, max_evaluations, pop_
     fig.suptitle('parameters: {0}\n fitness: {1} max_evaluations: {2} pop_size: {3}\nRothman2012 fitness: {4}'.format(candidate, fitness, max_evaluations, pop_size, rothman_fitness))
     plt.savefig('Rothman_AMPA_TM_fit_{0}.png'.format(time.time()))
 
-def scale_to_sargent():
+def scale_to_sargent(candidate):
     """Scale fit values to match peak AMPA reported in Sargent2005."""
     sargent_peak = 0.63 # (nS)
-    candidate = [0.3274, 4.492, 0.3659, 0.3351, 1.651, 0.1249, 131.0, 0.5548, 0.3000, 0.3376, 0.153, 0.4, 4.899, 43.10, 0.2792, 14.85]
 
     timestep = 0.01
     timepoints = np.arange(0, 300, timestep)
@@ -329,7 +331,11 @@ def scale_to_sargent():
     # 0.3351, 1.651, 0.1249, 131.0, 0.5548, 0.3948, 0.4442, 0.2013,
     # 0.4, 4.899, 43.1, 0.2792, 14.85]
 
-def plot_lems_comparison(problem, candidate):
+def plot_lems_comparison(candidate):
+    """
+    Plot a comparison between python and LEMS model implementation for
+    a specific trace: 20Hz, pulse train #0.
+    """
     lems_data = np.loadtxt("gAMPA_LEMS_20hz_G0.dat")
     timepoints = lems_data[:,0] * 1e3 # transform to ms
     lems_trace = lems_data[:,1] * 1e9 # transform to nS
@@ -354,7 +360,7 @@ def plot_lems_comparison(problem, candidate):
                                                               *candidate[7:])
 
     fig, ax = plt.subplots()
-    ax.scatter(pro, np.zeros(shape=t.shape)-0.05, color='r')
+    ax.scatter(pulse_times, np.zeros(shape=pulse_times.shape)-0.05, color='k')
     ax.plot(timepoints, lems_trace, linewidth=1.5)
     ax.plot(timepoints, signal_direct+signal_spillover, linewidth=1.5)
     plt.show()
@@ -368,11 +374,32 @@ if __name__ == '__main__':
     parser.add_argument("--scale",
                         help=scale_to_sargent.__doc__,
                         action="store_true")
+    parser.add_argument("--compare-exp",
+                        help=plot_optimisation_results.__doc__,
+                        action="store_true")
+    parser.add_argument("--compare-lems",
+                        help=plot_lems_comparison.__doc__,
+                        action="store_true")
+
+    # this is the official result of the optimisation. It's used for
+    # comparisons etc
+    candidate = [0.3274, 4.492, 0.3659, 0.3351, 1.651, 0.1249, 131.0, 0.5548, 0.3000, 0.3376, 0.153, 0.4, 4.899, 43.10, 0.2792, 14.85]
+    fitness = 0.021
+    max_evaluations = 21000
+    pop_size = 140
+
     args = parser.parse_args()
     if args.fit:
         main(plot=True)
     if args.scale:
-        scale_to_sargent()
+        scale_to_sargent(candidate)
+    if args.compare_exp:
+        plot_optimisation_results(candidate,
+                                  fitness,
+                                  max_evaluations,
+                                  pop_size)
+    if args.compare_lems:
+        plot_lems_comparison(candidate)
 
 #to profile, from shell:
 #python -m cProfile -o output.pstats tsodyks_markram_plasticity_fit.py
