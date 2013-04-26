@@ -269,14 +269,15 @@ def scale_to_sargent(candidate):
                                           timestep,
                                           0.,
                                           *candidate)
-    scaled_signal = sargent_peak * signal/signal.max()
+    scaling_factor = sargent_peak/signal.max()
+    scaled_signal = scaling_factor * signal
     scaled_candidate = candidate[:]
     for k in [1,2]:
         # scale 'amplitude' parameters
-        scaled_candidate[k] /= signal.max()
+        scaled_candidate[k] *= scaling_factor
     print(scaled_candidate)
-    # rounded scaled candidate should be [0.8647, 26.99,
-    # 4.199, 13.52, 121.9, 0.0322, 236.1, 6.394]
+    # rounded scaled candidate should be [0.8647, 17.00, 2.645, 13.52,
+    # 121.9, 0.0322, 236.1, 6.394]
 
     fig, ax = plt.subplots()
     ax.plot(timepoints, signal, label="fit to Rothman data")

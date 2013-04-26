@@ -315,14 +315,15 @@ def scale_to_sargent(candidate):
                                                               0.,
                                                               *candidate[7:])
     signal = signal_direct + signal_spillover
-    scaled_signal = sargent_peak * signal/signal.max()
+    scaling_factor = sargent_peak/signal.max()
+    scaled_signal = scaling_factor * signal
     scaled_candidate = candidate[:]
     for k in [1,2,8,9,10]:
         # scale 'amplitude' parameters
-        scaled_candidate[k] /= signal.max()
+        scaled_candidate[k] *= scaling_factor
     print(scaled_candidate)
-    # rounded scaled candidate should be [0.3274, 5.911, 0.4815,
-    # 0.3351, 1.651, 0.1249, 131.0, 0.5548, 0.3948, 0.4442, 0.2013,
+    # rounded scaled candidate should be [0.3274, 3.724, 0.3033,
+    # 0.3351, 1.651, 0.1249, 131.0, 0.5548, 0.2487, 0.2799, 0.1268,
     # 0.4, 4.899, 43.1, 0.2792, 14.85]
 
     fig, ax = plt.subplots()
