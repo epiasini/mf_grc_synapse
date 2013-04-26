@@ -25,10 +25,10 @@ Once the fits have been done, the basic waveforms have to undergo
 another scaling step before being used in a actual simulation. This is
 because the experimental data we are fitting to have been taken on a
 small number of cells (n=4), and better estimates for the peak values
-of the AMPA conductance are available in the literature. So,
-basically, we use our fits to determine the basic waveform shapes and
-plasticity properties but we refer to the peak AMPA value in
-Sargent2005 for the final scaling.
+of the AMPA conductance are available in the literature. Effectively,
+we use our fits to determine the basic waveform shapes and plasticity
+properties but we refer to the peak AMPA value in Sargent2005 (0.63
+nS) for the final scaling.
 """
 import random
 import time
@@ -247,8 +247,9 @@ def main(plot=False):
 
 def plot_optimisation_results(candidate, fitness, max_evaluations, pop_size):
     """
-    Plot a comparison of the model and the experimental data across
-    all experimental traces.
+    Plot a comparison of the model, the experimental data and the
+    original model by Rothman (Schwartz2012) across all experimental
+    traces. The figure gets saved to disk in the current folder.
     """
     fig, ax = plt.subplots(nrows=8, ncols=4, figsize=(160,80), dpi=500)
     rothman_fitness = 0
@@ -317,8 +318,12 @@ def scale_to_sargent(candidate):
     scaled_signal = sargent_peak * signal/signal.max()
     scaled_candidate = candidate[:]
     for k in [1,2,8,9,10]:
+        # scale 'amplitude' parameters
         scaled_candidate[k] /= signal.max()
     print(scaled_candidate)
+    # rounded scaled candidate should be [0.3274, 5.911, 0.4815,
+    # 0.3351, 1.651, 0.1249, 131.0, 0.5548, 0.3948, 0.4442, 0.2013,
+    # 0.4, 4.899, 43.1, 0.2792, 14.85]
 
     fig, ax = plt.subplots()
     ax.plot(timepoints, signal, label="fit to Rothman data")
@@ -327,9 +332,6 @@ def scale_to_sargent(candidate):
     fig.suptitle("direct {0}\nspillover {1}".format(scaled_candidate[:7],
                                                     scaled_candidate[7:]))
     plt.show()
-    # rounded scaled candidate should be [0.3274, 5.911, 0.4815,
-    # 0.3351, 1.651, 0.1249, 131.0, 0.5548, 0.3948, 0.4442, 0.2013,
-    # 0.4, 4.899, 43.1, 0.2792, 14.85]
 
 def plot_lems_comparison(candidate):
     """

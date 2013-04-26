@@ -1,3 +1,40 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Model fitting for J Rothman's data on the mossy fibre to granule cell
+synapse, NMDA component.
+
+The model is a multiexponential basic waveform (one rise time and two
+decay times) with short term plasticity (depression and facilitation)
+modeled after Tsodyks and Markram 1998.
+
+The experimental data consists of 32 conductance waveforms (8
+frequencies, 4 different Poisson spike trains generated at any given
+frequency; each trace an average across four cells; expressed in nS)
+paired with the sequences of stimulation times used to elicit
+them. The core idea of the fitting method is to measure how bad a
+given model (ie, set of parameter defining basic waveform shapes and
+plasticity) is by using it to generate 32 synthetic conductance traces
+corresponding to the experimental ones, and then measuring the average
+distance between the synthetic and the experimental traces.
+
+Once the fits have been done, the basic waveforms have to undergo
+another scaling step before being used in a actual simulation. This is
+because the experimental data we are fitting to have been taken on a
+small number of cells (n=4), and better estimates for the peak values
+of the NMDA conductance are available in the literature. Effectively,
+we use our fits only to determine the basic waveform shapes and
+plasticity properties. The final scaling for the waveforms, assuming
+total absence of Mg2+ block, is given following what Schwartz2012 did
+in the case when the parameter 'phi' was set to 1 (assumed to be a
+'physiological' value). That is to say, the peak of the unblocked NMDA
+waveform is set to the value reported in Sargent2005 for the peak of
+the AMPA waveform (0.63 nS). Finally, note that the actual value of
+peak gNMDAR will always be far less than gAMPAR during simulations
+because of the block: using the blockage model in Schwartz2012, at
+-40mV (spiking threshold for the granule cell) the actual conductance
+is about 20% of the unblocked value.
+"""
 import random
 import time
 import glob
@@ -5,7 +42,6 @@ import inspyred
 import h5py
 import numpy as np
 from matplotlib import pyplot as plt
-
 
 from waveforms import n_g_comp, rothman2012_NMDA_signal
 
@@ -132,6 +168,7 @@ def evaluator(candidates, args):
 
 
 def main(plot=False):
+    """Perform the main Tsodyks-Markram fit."""
     prng = random.Random()
     prng.seed(int(time.time()))
     max_evaluations = 22800
@@ -159,13 +196,17 @@ def main(plot=False):
     print("direct:    {0}".format(selected_candidate[:8]))
     print("fitness:   {0}".format(final_pop[0].fitness))
     if plot:
-        plot_optimisation_results(problem,
-                                  selected_candidate,
+        plot_optimisation_results(selected_candidate,
                                   final_pop[0].fitness,
                                   max_evaluations,
                                   pop_size)
 
-def plot_optimisation_results(problem, candidate, fitness, max_evaluations, pop_size):
+def plot_optimisation_results(candidate, fitness, max_evaluations, pop_size):
+    """
+    Plot a comparison of the model, the experimental data and the
+    original model by Rothman (Schwartz2012) across all experimental
+    traces. The figure gets saved to disk in the current folder.
+    """
     fig, ax = plt.subplots(nrows=8, ncols=4, figsize=(160,80), dpi=500)
     rothman_fitness = 0
 
@@ -177,8 +218,9 @@ def plot_optimisation_results(problem, candidate, fitness, max_evaluations, pop_
                 data_group = java_fit_data_repo['/{0}/{1}'.format(freq, prot)]
                 # jason's modeled traces have their first peak
                 # normalised to 1 and they don't have any offset, so
-                # we must add 1ms to the time dimension and scale by
-                # the value used for the maximum NMDA peak conductance
+                # we must add 1ms to the time dimension and
+                # 'denormalise' them by scaling them by the value he
+                # measured as the experimental NMDA peak conductance
                 # (0.18nS)
                 java_fit_time_points.append(np.array(data_group['average_waveform'][:-1,0]) + 1.)
                 java_fit_signals.append(np.array(data_group['average_waveform'][:-1,1]) * 0.18)
@@ -210,8 +252,69 @@ def plot_optimisation_results(problem, candidate, fitness, max_evaluations, pop_
     fig.suptitle('parameters: {0}\n fitness: {1} max_evaluations: {2} pop_size: {3}\nRothman2012 fitness: {4}'.format(candidate, fitness, max_evaluations, pop_size, rothman_fitness))
     plt.savefig('Rothman_NMDA_TM_fit_{0}.png'.format(time.time()))
 
+def scale_to_sargent(candidate):
+    """
+    Scale fit values to match peak AMPA reported in Sargent2005.
+    (unblocked, and phi=1!)
+    """
+    sargent_peak = 0.63 # (nS)
+
+    timestep = 0.01
+    timepoints = np.arange(0, 300, timestep)
+    pulse_times = np.array([10.])
+    single_waveform_length = timepoints.shape[0]
+    signal = synthetic_conductance_signal(timepoints,
+                                          pulse_times,
+                                          single_waveform_length,
+                                          timestep,
+                                          0.,
+                                          *candidate)
+    scaled_signal = sargent_peak * signal/signal.max()
+    scaled_candidate = candidate[:]
+    for k in [1,2]:
+        # scale 'amplitude' parameters
+        scaled_candidate[k] /= signal.max()
+    print(scaled_candidate)
+    # rounded scaled candidate should be [0.8647, 26.99,
+    # 4.199, 13.52, 121.9, 0.0322, 236.1, 6.394]
+
+    fig, ax = plt.subplots()
+    ax.plot(timepoints, signal, label="fit to Rothman data")
+    ax.plot(timepoints, scaled_signal, label="scaled to peak value by Sargent (unblocked, phi=1)")
+    ax.legend(loc="best")
+    fig.suptitle("parameters {0}".format(scaled_candidate))
+    plt.show()
+
 if __name__ == '__main__':
-    main(plot=True)
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--fit",
+                        help=main.__doc__,
+                        action="store_true")
+    parser.add_argument("--scale",
+                        help=scale_to_sargent.__doc__,
+                        action="store_true")
+    parser.add_argument("--compare-exp",
+                        help=plot_optimisation_results.__doc__,
+                        action="store_true")
+
+    # this is the official result of the optimisation. It's used for
+    # comparisons etc
+    candidate = [0.8647, 3.683, 0.5730, 13.52, 121.9, 0.03220, 236.1, 6.394]
+    fitness = 0.035
+    max_evaluations = 22800
+    pop_size = 140
+
+    args = parser.parse_args()
+    if args.fit:
+        main(plot=True)
+    if args.scale:
+        scale_to_sargent(candidate)
+    if args.compare_exp:
+        plot_optimisation_results(candidate,
+                                  fitness,
+                                  max_evaluations,
+                                  pop_size)
 
 #to profile, from shell:
 #python -m cProfile -o output.pstats tsodyks_markram_plasticity_fit.py
