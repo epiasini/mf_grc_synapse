@@ -286,6 +286,33 @@ def scale_to_sargent(candidate):
     fig.suptitle("parameters {0}".format(scaled_candidate))
     plt.show()
 
+def plot_lems_comparison(candidate):
+    """
+    Plot a comparison between python and LEMS model implementation for
+     a specific trace: 20Hz, pulse train #0. The LEMS data is for a
+     completely unblocked synapse with Sargent scaling.
+    """
+    lems_data = np.loadtxt("gNMDA_LEMS_20Hz_G0.dat")
+    timepoints = lems_data[:,0] * 1e3 # transform to ms
+    lems_trace = lems_data[:,1] * 1e9 # transform to nS
+
+    timestep = 0.025 # has to match what was used in the LEMS simulation
+    pulse_times = problem.exp_pulses[8]
+    single_waveform_length = problem.single_waveform_lengths[8]
+
+    signal = synthetic_conductance_signal(timepoints,
+                                          pulse_times,
+                                          single_waveform_length,
+                                          timestep,
+                                          0.,
+                                          *candidate)
+
+    fig, ax = plt.subplots()
+    ax.scatter(pulse_times, np.zeros(shape=pulse_times.shape)-0.05, color='k')
+    ax.plot(timepoints, lems_trace, linewidth=1.5)
+    ax.plot(timepoints, signal, linewidth=1.5)
+    plt.show()
+
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description=__doc__)
@@ -298,10 +325,14 @@ if __name__ == '__main__':
     parser.add_argument("--compare-exp",
                         help=plot_optimisation_results.__doc__,
                         action="store_true")
+    parser.add_argument("--compare-lems",
+                        help=plot_lems_comparison.__doc__,
+                        action="store_true")
 
     # this is the official result of the optimisation. It's used for
     # comparisons etc
     candidate = [0.8647, 3.683, 0.5730, 13.52, 121.9, 0.03220, 236.1, 6.394]
+    scaled_candidate = [0.8647, 17.00, 2.645, 13.52, 121.9, 0.0322, 236.1, 6.394]
     fitness = 0.035
     max_evaluations = 22800
     pop_size = 140
@@ -316,6 +347,8 @@ if __name__ == '__main__':
                                   fitness,
                                   max_evaluations,
                                   pop_size)
+    if args.compare_lems:
+        plot_lems_comparison(scaled_candidate)
 
 #to profile, from shell:
 #python -m cProfile -o output.pstats tsodyks_markram_plasticity_fit.py

@@ -337,17 +337,16 @@ def scale_to_sargent(candidate):
 def plot_lems_comparison(candidate):
     """
     Plot a comparison between python and LEMS model implementation for
-    a specific trace: 20Hz, pulse train #0.
+    a specific trace: 20Hz, pulse train #0. The LEMS data is for the
+    synapse with Sargent scaling.
     """
-    lems_data = np.loadtxt("gAMPA_LEMS_20hz_G0.dat")
+    lems_data = np.loadtxt("gAMPA_LEMS_20Hz_G0.dat")
     timepoints = lems_data[:,0] * 1e3 # transform to ms
     lems_trace = lems_data[:,1] * 1e9 # transform to nS
 
     timestep = 0.025 # has to match what was used in the LEMS simulation
     pulse_times = problem.exp_pulses[8]
     single_waveform_length = problem.single_waveform_lengths[8]
-
-
 
     signal_direct = synthetic_conductance_signal_direct(timepoints,
                                                         pulse_times,
@@ -387,6 +386,7 @@ if __name__ == '__main__':
     # this is the official result of the optimisation. It's used for
     # comparisons etc
     candidate = [0.3274, 4.492, 0.3659, 0.3351, 1.651, 0.1249, 131.0, 0.5548, 0.3000, 0.3376, 0.153, 0.4, 4.899, 43.10, 0.2792, 14.85]
+    scaled_candidate = [0.3274, 3.724, 0.3033, 0.3351, 1.651, 0.1249, 131.0, 0.5548, 0.2487, 0.2799, 0.1268, 0.4, 4.899, 43.1, 0.2792, 14.85]
     fitness = 0.021
     max_evaluations = 21000
     pop_size = 140
@@ -402,7 +402,7 @@ if __name__ == '__main__':
                                   max_evaluations,
                                   pop_size)
     if args.compare_lems:
-        plot_lems_comparison(candidate)
+        plot_lems_comparison(scaled_candidate)
 
 #to profile, from shell:
 #python -m cProfile -o output.pstats tsodyks_markram_plasticity_fit.py
