@@ -1,4 +1,3 @@
-import h5py
 from NeuroTools import stgen
 import numpy as np
 from matplotlib import pyplot as plt
@@ -107,4 +106,14 @@ ax_NMDA.set_ylabel('time-averaged NMDAR-mediated conductance')
 
 plt.show()
 
-
+# print my model's average conductance values divided by jason's, to
+# give an idea of the "expected average scaling" between the two. Note
+# that this is not necessarily very meaningful, as models are only
+# simulated after Sargent scaling, which may affect them differently.
+AMPA_scaling = np.zeros_like(jason_fit_frequencies)
+NMDA_scaling = np.zeros_like(jason_fit_frequencies)
+for k, freq in enumerate(jason_fit_frequencies):
+    AMPA_scaling[k] = average_conductances_AMPA[np.searchsorted(frequencies, freq)]/jason_fit_gAMPA[k]
+    NMDA_scaling[k] = average_conductances_NMDA[np.searchsorted(frequencies, freq)]/jason_fit_gNMDA[k]
+print("Average effective scaling between the two models (Piasini/Rothman):")
+print ("AMPA {0:.2f}, NMDA {1:.2f}".format(AMPA_scaling.mean(), NMDA_scaling.mean()))
