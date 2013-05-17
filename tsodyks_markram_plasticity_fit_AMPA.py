@@ -38,6 +38,9 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from waveforms import a_g_comp, rothman2012_AMPA_signal
+from waveforms import synthetic_conductance_signal_direct_AMPA as synthetic_conductance_signal_direct
+from waveforms import synthetic_conductance_signal_spillover_AMPA as synthetic_conductance_signal_spillover
+
 
 DATA_DIR = "/home/ucbtepi/doc/jason_data/JasonsIAFmodel/Jason_Laurence_AMPA_NMDA_Trains"
 NMDA_DIR = DATA_DIR + "/NMDA"
@@ -93,89 +96,6 @@ class Rothman_AMPA_STP(inspyred.benchmarks.Benchmark):
 problem = Rothman_AMPA_STP()
 bounder = inspyred.ec.Bounder([b[0] for b in problem.bounds],
                               [b[1] for b in problem.bounds])
-
-def plast_table(pulse_train, u_se, tau_rec):
-    # r[n,k] is the remaining fraction of synaptic resource before
-    # nth pulse. The remaing fraction before the 0-th pulse is
-    # supposed to be 1.
-    r =  np.ones(shape=pulse_train.shape, dtype=np.float)
-    pulse_intervals = np.diff(pulse_train)
-    # evolve according to tsodyks-markram model
-    for n in range(1, r.shape[0]):
-        r[n] = 1 - np.exp(-(pulse_intervals[n-1])/tau_rec) * (1 - r[n-1]*(1-u_se))
-    # by the (facilitation-less) tsodyks-markram model, the
-    # plasticity factors are obtained by multiplying r by u_se, to
-    # give the actual fraction of synaptic resource utilised at
-    # any given pulse, and by another constant representing the
-    # absolute synaptic efficacy (ie the response amplitude when
-    # all the synaptic resource is used). We skip the last step,
-    # as we are already optimising over the shape of the base
-    # synaptic waveform.
-    return r * u_se
-
-def synthetic_conductance_signal_direct(time_points, pulse_train, single_waveform_length, timestep_size, delay, tau_rise, a1, a2, tau_dec1, tau_dec2, u_se, tau_rec):
-    # this is meant to be used for a single component (direct or
-    # spillover). The 'delay' compensates the offset that is present
-    # between the experimental pulse times and the times when the
-    # responses start to appear on the experimental recordings. It is
-    # present in both the AMPA and the NMDA case, but with a different
-    # value.
-
-    n_time_points = time_points.shape[0]
-    signal = np.zeros(shape=n_time_points)
-    # compute a table of all the plasticity-scaled waveforms that we
-    # will need to add to form the total conductance train.
-    plast_factors = plast_table(pulse_train, u_se, tau_rec)
-    single_pulse_waveform = a_g_comp(time_points[0:single_waveform_length],
-                                     tau_rise,
-                                     a1,
-                                     tau_dec1,
-                                     a2,
-                                     tau_dec2,
-                                     0,
-                                     1)
-    pulse_waveforms = np.outer(plast_factors, single_pulse_waveform)
-    # find the indexes of the 'signal' array that correspond to the
-    # pulse times, as they are where we need to start summing each of
-    # the scaled waveforms we have precomputed.
-    start_points = np.floor((pulse_train + delay - time_points[0])/timestep_size)
-    end_points = start_points + single_waveform_length
-    # sum all waveforms with the appropriate offsets
-    for n, waveform in enumerate(pulse_waveforms):
-        signal[start_points[n]:end_points[n]] += waveform[:single_waveform_length-(end_points[n] - n_time_points)]
-    return signal
-
-def synthetic_conductance_signal_spillover(time_points, pulse_train, single_waveform_length, timestep_size, delay, tau_rise, a1, a2, a3, tau_dec1, tau_dec2, tau_dec3, u_se, tau_rec):
-    # this is meant to be used for a single component (direct or
-    # spillover). The 'delay' compensates the offset that is present
-    # between the experimental pulse times and the times when the
-    # responses start to appear on the experimental recordings. It is
-    # present in both the AMPA and the NMDA case, but with a different
-    # value.
-
-    n_time_points = time_points.shape[0]
-    signal = np.zeros(shape=n_time_points)
-    # compute a table of all the plasticity-scaled waveforms that we
-    # will need to add to form the total conductance train.
-    plast_factors = plast_table(pulse_train, u_se, tau_rec)
-    single_pulse_waveform = a_g_comp(time_points[0:single_waveform_length],
-                                     tau_rise,
-                                     a1,
-                                     tau_dec1,
-                                     a2,
-                                     tau_dec2,
-                                     a3,
-                                     tau_dec3)
-    pulse_waveforms = np.outer(plast_factors, single_pulse_waveform)
-    # find the indexes of the 'signal' array that correspond to the
-    # pulse times, as they are where we need to start summing each of
-    # the scaled waveforms we have precomputed.
-    start_points = np.floor((pulse_train + delay - time_points[0])/timestep_size)
-    end_points = start_points + single_waveform_length
-    # sum all waveforms with the appropriate offsets
-    for n, waveform in enumerate(pulse_waveforms):
-        signal[start_points[n]:end_points[n]] += waveform[:single_waveform_length-(end_points[n] - n_time_points)]
-    return signal
 
 def fitness_to_experiment(cs):
     # fitness is defined as the average (across experimental datasets)
