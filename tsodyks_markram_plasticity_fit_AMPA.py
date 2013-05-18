@@ -37,7 +37,6 @@ import inspyred
 import numpy as np
 from matplotlib import pyplot as plt
 
-from waveforms import a_g_comp, rothman2012_AMPA_signal
 from waveforms import synthetic_conductance_signal_direct_AMPA as synthetic_conductance_signal_direct
 from waveforms import synthetic_conductance_signal_spillover_AMPA as synthetic_conductance_signal_spillover
 
@@ -119,7 +118,7 @@ def fitness_to_experiment(cs):
                                                                   problem.timestep_sizes[k],
                                                                   0.54,
                                                                   *cs[7:])
-        distances.append(np.linalg.norm(signal_direct+signal_spillover-problem.exp_data[k][:,1])/np.sqrt(timepoints.shape[0]))# + 0.15 * np.abs(normalised_difference_trace.sum()))
+        distances.append(np.linalg.norm(signal_direct+signal_spillover-problem.exp_data[k][:,1])/np.sqrt(timepoints.shape[0]))
     return sum(distances)/len(distances)
 
 def generator(random, args):
@@ -197,16 +196,11 @@ def plot_optimisation_results(candidate, fitness, max_evaluations, pop_size):
                                                                   problem.timestep_sizes[k],
                                                                   0.54,
                                                                   *candidate[7:])
-        # rothman_signal = rothman2012_AMPA_signal(timepoints,
-        #                                          ep,
-        #                                          problem.single_waveform_lengths[k],
-        #                                          problem.timestep_sizes[k])
         rothman_signal = java_fit_signals[k]
         rothman_fitness += np.linalg.norm(rothman_signal - problem.exp_data[k][:,1])/np.sqrt(timepoints.shape[0])
         ax.flat[k].plot(timepoints, problem.exp_data[k][:,1], color='k', linewidth=3)
         ax.flat[k].scatter(ep, np.zeros(shape=ep.shape)-0.05, color='k')
         ax.flat[k].plot(timepoints, rothman_signal, linewidth=1, color='r')
-        #ax.flat[k].plot(java_fit_time_points[k], java_fit_signals[k], color='c')
         ax.flat[k].plot(timepoints, signal_direct+signal_spillover, linewidth=1, color='g')
         #ax.flat[k].plot(timepoints, signal_direct, color='r')
         #ax.flat[k].plot(timepoints, signal_spillover, color='c')

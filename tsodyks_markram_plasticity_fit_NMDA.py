@@ -43,7 +43,7 @@ import h5py
 import numpy as np
 from matplotlib import pyplot as plt
 
-from waveforms import n_g_comp, rothman2012_NMDA_signal
+from waveforms import rothman2012_NMDA_signal
 from waveforms import synthetic_conductance_signal_NMDA as synthetic_conductance_signal
 
 DATA_DIR = "/home/ucbtepi/doc/jason_data/JasonsIAFmodel/Jason_Laurence_AMPA_NMDA_Trains"
@@ -61,7 +61,6 @@ class Rothman_NMDA_STP(inspyred.benchmarks.Benchmark):
         self.n_protocols = 4
         self.exp_data = []
         self.exp_pulses = []
-        #self.binary_exp_pulses = []
         self.single_waveform_lengths = []
         self.timestep_sizes = []
         with h5py.File("NMDA_experimental_data.hdf5") as data_repo:
@@ -106,7 +105,7 @@ def fitness_to_experiment(cs):
                                               problem.timestep_sizes[k],
                                               1.,
                                               *cs)
-        distances.append(np.linalg.norm(signal-problem.exp_data[k][:,1])/np.sqrt(timepoints.shape[0]))# + 0.15 * np.abs(normalised_difference_trace.sum()))
+        distances.append(np.linalg.norm(signal-problem.exp_data[k][:,1])/np.sqrt(timepoints.shape[0]))
     return sum(distances)/len(distances)
 
 def generator(random, args):
