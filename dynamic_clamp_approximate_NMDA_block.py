@@ -6,7 +6,7 @@ from numpy import exp
 def block_factor_conductance_box(v, k1, k2):
     return 1./(1 + k1 * exp(-k2*v))
 
-def block_factor_rothman(v, z=2., T=35+273.15, block_concentration=1., delta_bind=0.35, delta_perm=0.53, c1=2.07, c2=0.015):
+def block_factor_rothman(v, z=2., T=36+273.15, block_concentration=1., delta_bind=0.35, delta_perm=0.53, c1=2.07, c2=0.015):
     F = 96485.3365 # C/mol (Faraday constant)
     R = 8314.4621 # mJ/(mol K) (ideal gas constant)
     theta = (z * F)/(R *T)
@@ -29,6 +29,17 @@ def plot_fit_results(k1, k2, lower_bound, upper_bound):
     voltage_points = np.arange(-100, 40, 0.01)
     block_values_rothman = block_factor_rothman(voltage_points)
     block_values_simple = block_factor_conductance_box(voltage_points, k1=k1, k2=k2)
+
+    # save to csv file to help Dan tune the conductance box
+    voltage_detail = np.arange(-80, -40, 0.01)
+    block_values_simple_detail = block_factor_conductance_box(voltage_detail, k1=k1, k2=k2)
+    block_values_rothman_detail = block_factor_rothman(voltage_detail)
+    np.savetxt("voltage_complete.csv", voltage_points)
+    np.savetxt("voltage_detail.csv", voltage_detail)
+    np.savetxt("block_rothman_complete.csv", block_values_rothman)
+    np.savetxt("block_simple_complete.csv", block_values_simple)
+    np.savetxt("block_rothman_detail.csv", block_values_rothman_detail)
+    np.savetxt("block_simple_detail.csv", block_values_simple_detail)
 
     fig, ax = plt.subplots()
     ax.fill_between(voltage_points, block_values_rothman, color="g")
