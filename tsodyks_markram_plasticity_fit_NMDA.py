@@ -42,6 +42,10 @@ import inspyred
 import h5py
 import numpy as np
 from matplotlib import pyplot as plt
+try:
+    import seaborn
+except ImportError:
+    print("[seaborn not found. Plots won't be as pretty!]")
 
 from waveforms import rothman2012_NMDA_signal
 from waveforms import synthetic_conductance_signal_NMDA as synthetic_conductance_signal
@@ -235,18 +239,8 @@ def scale_to_sargent(candidate):
     fig.suptitle("parameters {0}".format(scaled_candidate))
     plt.show()
 
-def plot_lems_comparison(candidate):
-    """
-    Plot a comparison between python and LEMS model implementation for
-     a specific trace: 20Hz, pulse train #0. The LEMS data is for a
-     completely unblocked synapse with Sargent scaling.
-    """
-    lems_data = np.loadtxt("gNMDA_LEMS_20Hz_G0.dat")
-    timepoints = lems_data[:,0] * 1e3 # transform to ms
-    lems_trace = lems_data[:,1] * 1e9 # transform to nS
-
-    timestep = 0.025 # has to match what was used in the LEMS simulation
-    pulse_times = problem.exp_pulses[8]
+def plot_single_comparison(filename, candidate, pulse_n, timepoints, trace, timestep=0.025):
+    pulse_times = problem.exp_pulses[pulse_n]
     single_waveform_length = problem.single_waveform_lengths[8]
 
     signal = synthetic_conductance_signal(timepoints,
@@ -257,10 +251,52 @@ def plot_lems_comparison(candidate):
                                           *candidate)
 
     fig, ax = plt.subplots()
-    ax.scatter(pulse_times, np.zeros(shape=pulse_times.shape)-0.05, color='k')
-    ax.plot(timepoints, lems_trace, linewidth=1.5)
-    ax.plot(timepoints, signal, linewidth=1.5)
+    # plot trace we are comparing
+    ax.plot(timepoints, trace, linewidth=2, color='k')
+    # plot model trace
+    ax.plot(timepoints, signal, linewidth=2, color="r")
+    # plot spike raster
+    displacement = 0
+    ax.scatter(pulse_times,
+               np.zeros_like(pulse_times)-displacement,
+               marker="o",
+               color="k")
+    ax.set_xlabel('time (ms)')
+    ax.set_ylabel('amplitude (a.u.)')
+    ax.xaxis.set_ticks_position('bottom')
+    ax.yaxis.set_ticks_position('left')
+    ax.spines['top'].set_color('none')
+    ax.spines['right'].set_color('none')
+    plt.savefig(filename,
+                dpi=100,
+                size=(5,10))
     plt.show()
+
+def plot_exp_comparison(candidate):
+    """
+    Plot a comparison between experiment and model implementation for
+    a specific trace: 20Hz, pulse train #0.
+    """
+    pulse_n = 20
+    timepoints = problem.exp_data[pulse_n][:,0]
+    trace = problem.exp_data[pulse_n][:,1]
+    timestep = problem.timestep_sizes[pulse_n]
+    filename = 'Rothman_AMPA_exp_compare_pulse_{0}.png'.format(pulse_n)
+    plot_single_comparison(filename, candidate, pulse_n, timepoints, trace, timestep)
+
+def plot_lems_comparison(candidate):
+    """
+    Plot a comparison between python and LEMS model implementation for
+     a specific trace: 20Hz, pulse train #0. The LEMS data is for a
+     completely unblocked synapse with Sargent scaling.
+    """
+    pulse_n = 8
+    lems_data = np.loadtxt("gAMPA_LEMS_20Hz_G0.dat")
+    timepoints = comparison_data[:,0] * 1e3 # transform to ms
+    lems_trace = comparison_data[:,1] * 1e9 # transform to nS
+    timestep = 0.025 # has to match what was used in the LEMS simulation
+    filename = 'Rothman_AMPA_LEMS_compare_pulse_{0}.png'.format(pulse_n)
+    plot_single_comparison(filename, candidate, pulse_n, timepoints, trace, timestep)
 
 if __name__ == '__main__':
     import argparse
@@ -271,8 +307,11 @@ if __name__ == '__main__':
     parser.add_argument("--scale",
                         help=scale_to_sargent.__doc__,
                         action="store_true")
-    parser.add_argument("--compare-exp",
+    parser.add_argument("--compare-all-exp",
                         help=plot_optimisation_results.__doc__,
+                        action="store_true")
+    parser.add_argument("--compare-exp",
+                        help=plot_exp_comparison.__doc__,
                         action="store_true")
     parser.add_argument("--compare-lems",
                         help=plot_lems_comparison.__doc__,
@@ -291,11 +330,13 @@ if __name__ == '__main__':
         main(plot=True)
     if args.scale:
         scale_to_sargent(candidate)
-    if args.compare_exp:
+    if args.compare_all_exp:
         plot_optimisation_results(candidate,
                                   fitness,
                                   max_evaluations,
                                   pop_size)
+    if args.compare_exp:
+        plot_exp_comparison(candidate)
     if args.compare_lems:
         plot_lems_comparison(scaled_candidate)
 

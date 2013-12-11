@@ -43,7 +43,7 @@ except ImportError:
 
 from waveforms import synthetic_conductance_signal_direct_AMPA as synthetic_conductance_signal_direct
 from waveforms import synthetic_conductance_signal_spillover_AMPA as synthetic_conductance_signal_spillover
-
+from plotting import plot_exp_comparison, plot_lems_comparison
 
 DATA_DIR = "/home/ucbtepi/doc/jason_data/JasonsIAFmodel/Jason_Laurence_AMPA_NMDA_Trains"
 NMDA_DIR = DATA_DIR + "/NMDA"
@@ -252,7 +252,7 @@ def scale_to_sargent(candidate):
                                                     scaled_candidate[7:]))
     plt.show()
 
-def plot_single_comparison(filename, candidate, pulse_n, timepoints, trace, timestep=0.025):
+def plot_single_comparison(filename, candidate, pulse_n, timepoints, trace, timestep=0.025, delay=0):
     pulse_times = problem.exp_pulses[pulse_n]
     single_waveform_length = problem.single_waveform_lengths[8]
 
@@ -260,22 +260,35 @@ def plot_single_comparison(filename, candidate, pulse_n, timepoints, trace, time
                                                         pulse_times,
                                                         single_waveform_length,
                                                         timestep,
-                                                        0.,
+                                                        delay,
                                                         *candidate[:7])
     signal_spillover = synthetic_conductance_signal_spillover(timepoints,
                                                               pulse_times,
                                                               single_waveform_length,
                                                               timestep,
-                                                              0.,
+                                                              delay,
                                                               *candidate[7:])
 
     fig, ax = plt.subplots()
-    ax.scatter(pulse_times, np.zeros(shape=pulse_times.shape)-0.05, color='k')
-    ax.plot(timepoints, trace, linewidth=1.5)
-    ax.plot(timepoints, signal_direct+signal_spillover, linewidth=1.5)
+    # plot trace we are comparing
+    ax.plot(timepoints, trace, linewidth=2.5, color='k')
+    # plot model trace
+    ax.plot(timepoints, signal_direct+signal_spillover, linewidth=2.5, color='r')
+    # plot spike raster
+    displacement = 0. # nS
+    ax.scatter(pulse_times,
+               np.zeros_like(pulse_times)-displacement,
+               marker="o",
+               color='k')
+    ax.set_xlabel('time (ms)')
+    ax.set_ylabel('amplitude (a.u.)')
+    ax.xaxis.set_ticks_position('bottom')
+    ax.yaxis.set_ticks_position('left')
+    ax.spines['top'].set_color('none')
+    ax.spines['right'].set_color('none')
     plt.savefig(filename,
-                dpi=200,
-                size=(5, 10))
+                dpi=100,
+                size=(5,10))
     plt.show()
 
 def plot_exp_comparison(candidate):
@@ -287,8 +300,9 @@ def plot_exp_comparison(candidate):
     timepoints = problem.exp_data[pulse_n][:,0]
     trace = problem.exp_data[pulse_n][:,1]
     timestep = problem.timestep_sizes[pulse_n]
+    delay = 0.54
     filename = 'Rothman_AMPA_exp_compare_pulse_{0}.png'.format(pulse_n)
-    plot_single_comparison(filename, candidate, pulse_n, timepoints, trace, timestep)
+    plot_single_comparison(filename, candidate, pulse_n, timepoints, trace, timestep, delay)
 
 def plot_lems_comparison(candidate):
     """
