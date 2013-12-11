@@ -15,7 +15,7 @@ frequencies = [5, 10, 20, 30, 50, 80, 100, 150]
 n_protocols = 4
 
 
-for syn_type in ["NMDA"]:#["AMPA", "NMDA"]:
+for syn_type in ["AMPA", "NMDA"]:
     with h5py.File("{0}_experimental_data.hdf5".format(syn_type)) as data_repo:
         for freq in frequencies:
             f_group = data_repo.create_group(str(freq))
@@ -35,7 +35,7 @@ for syn_type in ["NMDA"]:#["AMPA", "NMDA"]:
                 p_group.create_dataset('average_waveform', data=np.mean(truncated_waveforms, axis=0))
 
 with h5py.File("AMPA_jason_fit_traces.hdf5") as data_repo:
-    for freq in []:#frequencies:
+    for freq in frequencies:
         f_group = data_repo.create_group(str(freq))
         for prot in range(n_protocols):
             p_group = f_group.create_group(str(prot))
@@ -46,7 +46,7 @@ with h5py.File("AMPA_jason_fit_traces.hdf5") as data_repo:
             p_group.create_dataset('average_waveform', data=waveform)
 
 with h5py.File("NMDA_jason_fit_traces.hdf5") as data_repo:
-    for freq in []:#frequencies:
+    for freq in frequencies:
         f_group = data_repo.create_group(str(freq))
         for prot in range(n_protocols):
             p_group = f_group.create_group(str(prot))
